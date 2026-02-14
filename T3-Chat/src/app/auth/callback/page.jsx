@@ -13,11 +13,12 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Wait for session to load
-      if (isPending) return;
+      if (isPending) {
+        console.log("Session is pending...");
+        return;
+      }
 
       try {
-        // Check if we have a session
         if (!session?.user?.email) {
           console.error("No session found");
           setError("Authentication failed. No session found.");
@@ -25,9 +26,25 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        console.log("Session found:", session.user.email);
+        console.log("=== CALLBACK HANDLER ===");
+        console.log("Session user:", session.user);
 
-        // Check if user's email is already verified
+        // ✅ FORCE emailVerified to false if it's true from OAuth
+        if (session.user.emailVerified === true) {
+          console.log("🔧 Forcing emailVerified to false for new OAuth user");
+          
+          const forceResponse = await fetch("/api/auth/force-unverified", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: session.user.id }),
+          });
+
+          if (forceResponse.ok) {
+            console.log("✅ Successfully set emailVerified to false");
+          }
+        }
+
+        // Check verification status
         setStatus("checking");
         const checkResponse = await fetch("/api/auth/check-verification", {
           method: "POST",
@@ -36,14 +53,16 @@ export default function AuthCallbackPage() {
         });
 
         if (!checkResponse.ok) {
+          const errorText = await checkResponse.text();
+          console.error("Check verification response:", errorText);
           throw new Error(`Check verification failed: ${checkResponse.status}`);
         }
 
         const checkData = await checkResponse.json();
-        console.log("Verification check:", checkData);
+        console.log("Verification check result:", checkData);
 
         if (checkData.isVerified) {
-          // User is already verified, redirect to home
+          console.log("✅ User already verified, redirecting to home");
           setStatus("verified");
           setTimeout(() => {
             router.push("/");
@@ -52,6 +71,7 @@ export default function AuthCallbackPage() {
         }
 
         // User needs verification - send email
+        console.log("📧 User needs verification, sending email...");
         setStatus("sending");
         const response = await fetch("/api/auth/verify", {
           method: "POST",
@@ -64,6 +84,8 @@ export default function AuthCallbackPage() {
         });
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Verify response error:", errorText);
           throw new Error(`Verification email failed: ${response.status}`);
         }
 
@@ -71,12 +93,13 @@ export default function AuthCallbackPage() {
         console.log("Verification email result:", data);
 
         if (data.success) {
-          // Redirect to verification page
+          console.log("✅ Email sent, redirecting to verification page");
           setStatus("redirecting");
           setTimeout(() => {
             router.push(`/auth/verify?email=${encodeURIComponent(session.user.email)}`);
-          }, 1000);
+          }, 1500);
         } else {
+          console.error("Email send failed:", data.error);
           setError(data.error || "Failed to send verification email.");
           setStatus("error");
         }
@@ -102,9 +125,7 @@ export default function AuthCallbackPage() {
           <h1 className="text-2xl font-bold text-amber-900 dark:text-amber-100">
             Authentication Error
           </h1>
-          <p className="text-amber-800 dark:text-amber-200">
-            {error}
-          </p>
+          <p className="text-amber-800 dark:text-amber-200">{error}</p>
           <button
             onClick={() => router.push("/auth/sign-in")}
             className="px-6 py-3 bg-amber-800 hover:bg-amber-700 text-white rounded-lg font-semibold transition-all"

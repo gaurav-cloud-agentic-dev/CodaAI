@@ -24,7 +24,7 @@ model User {
   id            String    @id @default(uuid())
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean   @default(false)  // ← Back to Boolean
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

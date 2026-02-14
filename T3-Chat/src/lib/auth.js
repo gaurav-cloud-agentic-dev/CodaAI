@@ -8,7 +8,7 @@ export const auth = betterAuth({
     }),
 
     emailAndPassword: {
-        enabled: true
+        enabled: true,
     },
 
     socialProviders: {
@@ -19,20 +19,15 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            // Force account selection every time
-            authorizationParams: {
-                prompt: "select_account",
-                access_type: "offline",
-            },
         },
     },
 
     session: {
-        expiresIn: 60 * 60 * 24 * 7, // 7 days in seconds
-        updateAge: 60 * 60 * 24, // Update session every 24 hours
+        expiresIn: 60 * 60 * 24 * 7,
+        updateAge: 60 * 60 * 24,
         cookieCache: {
             enabled: true,
-            maxAge: 5 * 60, // Cache for 5 minutes
+            maxAge: 5 * 60,
         },
     },
 

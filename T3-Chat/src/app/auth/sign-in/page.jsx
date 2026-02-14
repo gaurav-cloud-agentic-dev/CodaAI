@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const roles = [
   { text: "developers", status: "Debugging..." },
@@ -15,11 +16,15 @@ const roles = [
 ];
 
 export default function Page() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoadingGithub, setIsLoadingGithub] = useState(false);
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isClearing, setIsClearing] = useState(true);
+
+  const wasVerified = searchParams.get("verified") === "true";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,8 +35,13 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    // Clear any existing session when landing on sign-in page
     const clearSession = async () => {
+      if (wasVerified) {
+        console.log("✅ User just verified!");
+        setIsClearing(false);
+        return;
+      }
+
       if (session?.user) {
         console.log("Clearing existing session...");
         try {
@@ -50,7 +60,7 @@ export default function Page() {
     };
 
     clearSession();
-  }, [session]);
+  }, [session, wasVerified]);
 
   const handleGithubSignIn = async () => {
     setIsLoadingGithub(true);
@@ -66,28 +76,18 @@ export default function Page() {
   };
 
   const handleGoogleSignIn = async () => {
-  setIsLoadingGoogle(true);
-  try {
-    await signIn.social({
-      provider: "google",
-      callbackURL: "/auth/callback",
-      // Force Google to show account picker
-      fetchOptions: {
-        onRequest: (context) => {
-          // Add prompt parameter to OAuth URL
-          const url = new URL(context.url);
-          url.searchParams.set('prompt', 'select_account');
-          context.url = url.toString();
-        },
-      },
-    });
-  } catch (error) {
-    setIsLoadingGoogle(false);
-    console.error("Google sign-in error:", error);
-  }
-};
+    setIsLoadingGoogle(true);
+    try {
+      await signIn.social({
+        provider: "google",
+        callbackURL: "/auth/callback",
+      });
+    } catch (error) {
+      setIsLoadingGoogle(false);
+      console.error("Google sign-in error:", error);
+    }
+  };
 
-  // Show loading while clearing session
   if (isClearing) {
     return (
       <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950">
@@ -100,18 +100,88 @@ export default function Page() {
     );
   }
 
+  if (wasVerified) {
+    return (
+      <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-6 text-center max-w-2xl"
+        >
+          <div className="text-7xl mb-4">✅</div>
+          <h1 className="text-3xl md:text-4xl font-bold text-amber-950 dark:text-amber-100 mb-4">
+            Email Verified!
+          </h1>
+          <p className="text-lg md:text-xl text-amber-800 dark:text-amber-200 mb-8">
+            Your email has been successfully verified. Please sign in again to continue.
+          </p>
+          
+          <div className="flex flex-row gap-6 w-full max-w-xl">
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full px-5 py-3 flex flex-row justify-center items-center gap-3 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleGithubSignIn}
+                disabled={isLoadingGithub || isLoadingGoogle}
+              >
+                {isLoadingGithub ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                    />
+                    <span className="font-semibold text-white">Authenticating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Image src="/Github.png" alt="Github" width={22} height={22} className="invert brightness-0" />
+                    <span className="font-semibold text-white">GitHub</span>
+                  </>
+                )}
+              </Button>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full px-5 py-3 flex flex-row justify-center items-center gap-3 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleGoogleSignIn}
+                disabled={isLoadingGithub || isLoadingGoogle}
+              >
+                {isLoadingGoogle ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                    />
+                    <span className="font-semibold text-white">Authenticating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Image src="/Google-Logo.png" alt="Google" width={22} height={22} />
+                    <span className="font-semibold text-white">Google</span>
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+    );
+  }
+
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4 overflow-hidden">
       
-      {/* Animated Container */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="flex flex-col items-center text-center space-y-8 max-w-4xl w-full"
+        className="flex flex-col items-center text-center space-y-8 max-w-5xl w-full"
       >
 
-        {/* Status Badge */}
         <AnimatePresence mode="wait">
           <motion.div
             key={roles[currentIndex].status}
@@ -132,13 +202,12 @@ export default function Page() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Main Heading with Animated Word */}
         <div className="flex flex-col items-center gap-2">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif tracking-tight flex flex-nowrap items-center justify-center gap-4 whitespace-nowrap">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif tracking-tight flex flex-nowrap items-center justify-center gap-5">
             <span className="text-amber-950 dark:text-amber-100">Built for</span>
             <span className="text-amber-700 dark:text-amber-400 flex items-center gap-3">
               <svg 
-                className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0" 
+                className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0" 
                 viewBox="0 0 24 24" 
                 fill="none" 
                 stroke="currentColor"
@@ -152,7 +221,7 @@ export default function Page() {
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   exit={{ opacity: 0, y: -20, filter: "blur(8px)" }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="inline-block min-w-[240px] md:min-w-[280px] lg:min-w-[350px] text-left"
+                  className="inline-block min-w-[280px] md:min-w-[360px] lg:min-w-[420px] text-left"
                 >
                   {roles[currentIndex].text}
                 </motion.span>
@@ -161,25 +230,22 @@ export default function Page() {
           </h1>
         </div>
 
-        {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-amber-900 dark:text-amber-100 text-base md:text-lg max-w-2xl leading-relaxed font-normal tracking-wide"
+          className="text-amber-900 dark:text-amber-100 text-base md:text-lg lg:text-xl max-w-2xl leading-relaxed font-normal tracking-wide"
         >
           Where intelligence meets conversation. Crafted for those who demand precision, 
           elegance, and performance at scale.
         </motion.p>
 
-        {/* Sign In Buttons - Side by Side */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.6 }}
-          className="flex flex-row gap-4 mt-8 w-full max-w-lg justify-center"
+          className="flex flex-row gap-5 mt-8 w-full max-w-xl justify-center"
         >
-          {/* GitHub Sign In */}
           <motion.div
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -187,7 +253,7 @@ export default function Page() {
           >
             <Button
               variant="outline"
-              className="w-full px-4 py-3 flex flex-row justify-center items-center gap-2 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 py-3 flex flex-row justify-center items-center gap-3 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleGithubSignIn}
               disabled={isLoadingGithub || isLoadingGoogle}
             >
@@ -207,8 +273,8 @@ export default function Page() {
                   <Image 
                     src="/Github.png" 
                     alt="Github" 
-                    width={20} 
-                    height={20}
+                    width={22} 
+                    height={22}
                     className="invert brightness-0"
                   />
                   <span className="font-semibold text-white">
@@ -219,7 +285,6 @@ export default function Page() {
             </Button>
           </motion.div>
 
-          {/* Google Sign In */}
           <motion.div
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -227,7 +292,7 @@ export default function Page() {
           >
             <Button
               variant="outline"
-              className="w-full px-4 py-3 flex flex-row justify-center items-center gap-2 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 py-3 flex flex-row justify-center items-center gap-3 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleGoogleSignIn}
               disabled={isLoadingGithub || isLoadingGoogle}
             >
@@ -247,8 +312,8 @@ export default function Page() {
                   <Image 
                     src="/Google-Logo.png" 
                     alt="Google" 
-                    width={20} 
-                    height={20}
+                    width={22} 
+                    height={22}
                   />
                   <span className="font-semibold text-white">
                     Google

@@ -16,7 +16,6 @@ export default function VerifyPage() {
   const inputRefs = useRef([]);
 
   useEffect(() => {
-    // Focus first input on mount
     inputRefs.current[0]?.focus();
   }, []);
 
@@ -28,7 +27,6 @@ export default function VerifyPage() {
     setCode(newCode);
     setError("");
 
-    // Auto-focus next input
     if (value && index < 7) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -54,40 +52,47 @@ export default function VerifyPage() {
   };
 
   const handleVerify = async () => {
-    const verificationCode = code.join("");
+  const verificationCode = code.join("");
+  
+  if (verificationCode.length !== 8) {
+    setError("Please enter the complete verification code");
+    return;
+  }
+
+  setIsVerifying(true);
+  
+  try {
+    console.log("Verifying code:", verificationCode);
     
-    if (verificationCode.length !== 8) {
-      setError("Please enter the complete verification code");
-      return;
-    }
+    const response = await fetch("/api/auth/verify-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code: verificationCode }),
+    });
 
-    setIsVerifying(true);
-    
-    try {
-      const response = await fetch("/api/auth/verify-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code: verificationCode }),
-      });
+    const data = await response.json();
+    console.log("Verification response:", data);
 
-      const data = await response.json();
-
-      if (data.success) {
-        // Show loading animation and redirect
-        setTimeout(() => {
-          router.push("/");
-        }, 2000);
-      } else {
-        setError(data.error || "Invalid verification code");
-        setIsVerifying(false);
-        setCode(["", "", "", "", "", "", "", ""]);
-        inputRefs.current[0]?.focus();
-      }
-    } catch (error) {
-      setError("Verification failed. Please try again.");
+    if (data.success) {
+      console.log("✅ Verification successful!");
+      
+      // Sessions deleted, redirect to sign-in to create verified session
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log("Redirecting to sign-in...");
+      window.location.href = "/auth/sign-in?verified=true";
+    } else {
+      setError(data.error || "Invalid verification code");
       setIsVerifying(false);
+      setCode(["", "", "", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
     }
-  };
+  } catch (error) {
+    console.error("Verification error:", error);
+    setError("Verification failed. Please try again.");
+    setIsVerifying(false);
+  }
+};
 
   const handleResend = async () => {
     try {
@@ -119,6 +124,7 @@ export default function VerifyPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-6"
         >
+          <div className="text-6xl mb-4">✅</div>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -129,7 +135,7 @@ export default function VerifyPage() {
             animate={{ opacity: 1 }}
             className="text-2xl font-semibold text-amber-900 dark:text-amber-100"
           >
-            Verifying your account...
+            Email verified! Redirecting...
           </motion.p>
         </motion.div>
       </section>
@@ -144,7 +150,6 @@ export default function VerifyPage() {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md"
       >
-        {/* Header */}
         <div className="text-center mb-8">
           <motion.div
             initial={{ scale: 0 }}
@@ -165,7 +170,6 @@ export default function VerifyPage() {
           </p>
         </div>
 
-        {/* Code Input */}
         <div className="bg-white dark:bg-amber-950 rounded-2xl p-8 shadow-xl border border-amber-200 dark:border-amber-800">
           <label className="block text-sm font-medium text-amber-900 dark:text-amber-100 mb-4 text-center">
             Enter verification code
@@ -210,7 +214,6 @@ export default function VerifyPage() {
           </p>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-sm text-amber-800 dark:text-amber-200 mt-6">
           Didn't receive the code?{" "}
           <button 
