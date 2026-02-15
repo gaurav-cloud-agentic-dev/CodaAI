@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
@@ -10,11 +10,18 @@ export default function AuthCallbackPage() {
   const { data: session, isPending } = useSession();
   const [status, setStatus] = useState("processing");
   const [error, setError] = useState(null);
+  const hasProcessed = useRef(false); // ✅ Add this to prevent duplicate processing
 
   useEffect(() => {
     const handleCallback = async () => {
       if (isPending) {
         console.log("Session is pending...");
+        return;
+      }
+
+      // ✅ Prevent duplicate processing
+      if (hasProcessed.current) {
+        console.log("Already processed, skipping...");
         return;
       }
 
@@ -26,25 +33,53 @@ export default function AuthCallbackPage() {
           return;
         }
 
+        // ✅ Mark as processed immediately
+        hasProcessed.current = true;
+
         console.log("=== CALLBACK HANDLER ===");
         console.log("Session user:", session.user);
 
-        // ✅ FORCE emailVerified to false if it's true from OAuth
-        if (session.user.emailVerified === true) {
-          console.log("🔧 Forcing emailVerified to false for new OAuth user");
+        // Check which OAuth provider was used
+        const accountResponse = await fetch("/api/auth/get-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: session.user.id }),
+        });
+
+        const accountData = await accountResponse.json();
+        console.log("Account data:", accountData);
+
+        // If GitHub OAuth, set emailVerified to true and go directly to home
+        if (accountData.provider === "github") {
+          console.log("✅ GitHub OAuth - setting verified and redirecting to home");
           
-          const forceResponse = await fetch("/api/auth/force-unverified", {
+          // Ensure emailVerified is true for GitHub users
+          await fetch("/api/auth/set-verified", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: session.user.id }),
           });
-
-          if (forceResponse.ok) {
-            console.log("✅ Successfully set emailVerified to false");
-          }
+          
+          setStatus("success");
+          setTimeout(() => {
+            router.push("/");
+          }, 1000);
+          return;
         }
 
-        // Check verification status
+        // For Google OAuth - FORCE unverified first, then check
+        console.log("📧 Google OAuth - forcing unverified status first");
+
+        // STEP 1: Always force to unverified initially
+        await fetch("/api/auth/force-unverified", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: session.user.id }),
+        });
+
+        console.log("✅ Forced emailVerified to false");
+
+        // STEP 2: Check if this user was previously verified (has verification record)
         setStatus("checking");
         const checkResponse = await fetch("/api/auth/check-verification", {
           method: "POST",
@@ -61,8 +96,9 @@ export default function AuthCallbackPage() {
         const checkData = await checkResponse.json();
         console.log("Verification check result:", checkData);
 
+        // If returning user who completed verification before (coming from "Get Started" button)
         if (checkData.isVerified) {
-          console.log("✅ User already verified, redirecting to home");
+          console.log("✅ Returning verified user (from node page), redirecting to home");
           setStatus("verified");
           setTimeout(() => {
             router.push("/");
@@ -70,8 +106,8 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // User needs verification - send email
-        console.log("📧 User needs verification, sending email...");
+        // STEP 3: New user - send verification email
+        console.log("📧 New user needs verification, sending email...");
         setStatus("sending");
         const response = await fetch("/api/auth/verify", {
           method: "POST",
@@ -107,6 +143,7 @@ export default function AuthCallbackPage() {
         console.error("Callback error:", err);
         setError(err.message || "An error occurred. Please try again.");
         setStatus("error");
+        hasProcessed.current = false; // ✅ Reset on error so user can retry
       }
     };
 
@@ -159,6 +196,7 @@ export default function AuthCallbackPage() {
           {status === "sending" && "Sending verification code..."}
           {status === "redirecting" && "Redirecting to verification..."}
           {status === "verified" && "Welcome back! Redirecting..."}
+          {status === "success" && "Authentication successful! Redirecting..."}
         </motion.p>
       </motion.div>
     </section>

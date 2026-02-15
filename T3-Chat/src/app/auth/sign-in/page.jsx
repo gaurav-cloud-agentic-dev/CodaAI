@@ -89,21 +89,21 @@ export default function Page() {
   };
 
   if (isClearing) {
-  return (
-    <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950">
-      <div className="flex flex-col items-center gap-4">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-amber-800 border-t-transparent rounded-full"
-        />
-        <p className="text-lg font-semibold text-amber-900 dark:text-amber-100">
-          Verifying
-        </p>
-      </div>
-    </section>
-  );
-}
+    return (
+      <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950">
+        <div className="flex flex-col items-center gap-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-amber-800 border-t-transparent rounded-full"
+          />
+          <p className="text-lg font-semibold text-amber-900 dark:text-amber-100">
+            Verifying
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   if (wasVerified) {
     return (
@@ -335,26 +335,46 @@ export default function Page() {
                 
                 {/* Get Started Button */}
                 <Button
-                  onClick={handleGoogleSignIn}
+                  onClick={async () => {
+                    console.log("✅ User verified, creating authenticated session...");
+                    setIsLoadingGoogle(true);
+                    
+                    // Sign in with Google to create a fresh verified session
+                    await signIn.social({
+                      provider: "google",
+                      callbackURL: "/",
+                    });
+                  }}
                   disabled={isLoadingGoogle}
                   className="w-full py-3 px-4 bg-amber-900 hover:bg-amber-800 dark:bg-amber-950 dark:hover:bg-amber-900 text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <svg 
-                      className="w-5 h-5" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                  {isLoadingGoogle ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
-                    </svg>
-                    <span>Get Started</span>
-                  </div>
+                      <span>Launching...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <svg 
+                        className="w-5 h-5" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                        />
+                      </svg>
+                      <span>Get Started</span>
+                    </div>
+                  )}
                 </Button>
               </motion.div>
             </motion.div>
