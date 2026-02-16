@@ -155,12 +155,12 @@ const SideBar = () => {
         }
       `}</style>
 
-      {/* Main Sidebar */}
+      {/* Main Sidebar - INCREASED WIDTH */}
       <motion.div
-        initial={{ width: 240 }}
-        animate={{ width: isOpen ? 240 : 60 }}
+        initial={{ width: 280 }}
+        animate={{ width: isOpen ? 280 : 70 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="h-screen bg-white dark:bg-gray-900 border-r-2 border-gray-200 dark:border-gray-700 flex flex-col relative shadow-xl"
+        className="h-screen bg-gradient-to-b from-gray-50 via-orange-50/30 to-amber-50/40 dark:from-gray-900 dark:via-orange-950/20 dark:to-amber-950/30 border-r-2 border-gray-200 dark:border-gray-700 flex flex-col relative shadow-xl"
         style={{
           boxShadow: '4px 0 15px -3px rgba(0, 0, 0, 0.1), 2px 0 6px -2px rgba(0, 0, 0, 0.05)'
         }}
@@ -203,8 +203,8 @@ const SideBar = () => {
           </AnimatePresence>
         </div>
 
-        {/* Menu Items */}
-        <div className="p-3 space-y-2.5">
+        {/* Menu Items - REDUCED HOVER MOVEMENT */}
+        <div className="p-4 space-y-2.5">
           {menuItems.map((item, index) => (
             <motion.button
               key={item.id}
@@ -214,9 +214,9 @@ const SideBar = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.05, x: isOpen ? 6 : 0 }}
-              whileTap={{ scale: 0.95 }}
-              className={`w-full flex items-center ${isOpen ? 'gap-3 px-3' : 'justify-center'} py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative group shadow-sm hover:shadow-md`}
+              whileHover={{ scale: 1.02, x: isOpen ? 3 : 0 }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full flex items-center ${isOpen ? 'gap-3 px-4' : 'justify-center'} py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative group shadow-sm hover:shadow-md`}
             >
               <motion.div
                 animate={hoveredItem === item.id ? { 
@@ -269,7 +269,7 @@ const SideBar = () => {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className="flex-1 overflow-y-auto px-2 py-4 custom-scrollbar"
+              className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar"
             >
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
@@ -291,12 +291,12 @@ const SideBar = () => {
                     transition={{ delay: index * 0.05 }}
                     onMouseEnter={() => setHoveredChat(chat.id)}
                     onMouseLeave={() => setHoveredChat(null)}
-                    whileHover={{ x: 6, scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    whileHover={{ x: 3, scale: 1.01 }}
+                    transitions={{ type: "spring", stiffness: 300, damping: 20 }}
                     className="relative group"
                   >
                     <motion.button 
-                      className="w-full text-left px-2.5 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md"
                       whileTap={{ scale: 0.98 }}
                     >
                       <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate pr-6 leading-tight">
@@ -320,7 +320,7 @@ const SideBar = () => {
                           }}
                           whileHover={{ scale: 1.2, rotate: 90 }}
                           whileTap={{ scale: 0.9 }}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         >
                           <MoreVertical className="w-3.5 h-3.5 text-gray-900 dark:text-gray-100" />
                         </motion.button>
@@ -353,7 +353,7 @@ const SideBar = () => {
                   onMouseLeave={() => setHoveredChat(null)}
                   whileHover={{ scale: 1.25, rotate: 5 }}
                   whileTap={{ scale: 0.9 }}
-                  className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-900 dark:text-gray-100 text-xs font-bold relative shadow-md hover:shadow-xl transition-all"
+                  className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-900 dark:text-gray-100 text-xs font-bold relative shadow-md hover:shadow-xl transition-all"
                 >
                   {index + 1}
                   
@@ -380,17 +380,17 @@ const SideBar = () => {
         </AnimatePresence>
 
         {/* User Profile */}
-        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <motion.button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className={`w-full flex items-center ${isOpen ? 'gap-2 px-2' : 'justify-center'} py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md`}
           >
             <motion.div 
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.6 }}
-              className="w-7 h-7 bg-gradient-to-br from-gray-700 to-gray-900 dark:from-gray-600 dark:to-gray-800 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md"
+              className="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-900 dark:from-gray-600 dark:to-gray-800 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md"
             >
               GS
             </motion.div>
@@ -409,7 +409,7 @@ const SideBar = () => {
                     </p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Free plan</p>
                   </motion.div>
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-900 dark:text-gray-100" />
+                  <ChevronDown className="w-4 h-4 text-gray-900 dark:text-gray-100" />
                 </>
               )}
             </AnimatePresence>
@@ -490,7 +490,7 @@ const SideBar = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -300 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed left-[240px] top-0 bottom-0 w-96 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-hidden border-r border-gray-200 dark:border-gray-700"
+              className="fixed left-[280px] top-0 bottom-0 w-96 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-hidden border-r border-gray-200 dark:border-gray-700"
             >
               <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -624,7 +624,7 @@ const SideBar = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="fixed bottom-16 left-4 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+              className="fixed bottom-20 left-4 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
             >
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">

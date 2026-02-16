@@ -36,7 +36,7 @@ const GmailEnvelope = () => {
           perspective: "1000px"
         }}
       >
-        <div className="bg-white rounded-lg shadow-2xl p-4 w-32 border-2 border-amber-200">
+        <div className="bg-white rounded-lg shadow-2xl p-4 w-32 border-2 border-gray-200">
           {/* Gmail logo */}
           <div className="flex justify-center mb-2">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -52,7 +52,7 @@ const GmailEnvelope = () => {
           </div>
           {/* Verification code preview */}
           <div className="mt-3 text-center">
-            <div className="text-xs font-bold text-amber-700">••••••••</div>
+            <div className="text-xs font-bold text-gray-700">••••••••</div>
           </div>
         </div>
       </motion.div>
@@ -61,7 +61,7 @@ const GmailEnvelope = () => {
       <div className="relative w-28 h-20 z-20">
         {/* Envelope back */}
         <motion.div
-          className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-200 dark:to-gray-300 rounded-lg shadow-lg border border-gray-300"
+          className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-lg border border-gray-300"
           animate={{
             y: isHovered ? 2 : 0
           }}
@@ -243,28 +243,28 @@ export default function VerifyPage() {
   };
 
   if (isVerifying) {
-  return (
-    <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center gap-6"
-      >
+    return (
+      <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-amber-700 border-t-transparent rounded-full"
-        />
-        <p className="text-2xl font-medium text-amber-900 dark:text-amber-100">
-          Verifying your details...
-        </p>
-      </motion.div>
-    </section>
-  );
-}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-gray-700 border-t-transparent rounded-full"
+          />
+          <p className="text-2xl font-medium text-gray-800">
+            Verifying your details...
+          </p>
+        </motion.div>
+      </section>
+    );
+  }
 
   return (
-    <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4 py-12">
+    <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -288,16 +288,16 @@ export default function VerifyPage() {
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-center mb-10"
         >
-          <h1 className="text-2xl font-semibold text-amber-950 dark:text-amber-100 mb-3">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-3">
             Verify Your Email
           </h1>
-          <p className="text-amber-800 dark:text-amber-200 text-sm leading-relaxed px-4">
+          <p className="text-gray-600 text-sm leading-relaxed px-4">
             We have sent a verification code to your email
           </p>
-          <p className="text-amber-900 dark:text-amber-100 font-medium text-sm mt-1">
+          <p className="text-gray-900 font-medium text-sm mt-1">
             {email}
           </p>
-          <p className="text-amber-700 dark:text-amber-300 text-xs mt-2">
+          <p className="text-gray-500 text-xs mt-2">
             Please enter the verification code below
           </p>
         </motion.div>
@@ -320,7 +320,7 @@ export default function VerifyPage() {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-16 text-center text-3xl font-semibold bg-white dark:bg-amber-900 text-amber-900 dark:text-amber-100 border-b-3 border-amber-400 dark:border-amber-600 focus:border-amber-700 dark:focus:border-amber-400 outline-none transition-all duration-200"
+                className="w-12 h-16 text-center text-3xl font-semibold bg-gray-50 text-gray-900 border-b-3 border-gray-300 focus:border-gray-700 focus:bg-white outline-none transition-all duration-200 shadow-sm"
                 style={{ 
                   borderBottom: '3px solid',
                   borderRadius: '0',
@@ -335,14 +335,14 @@ export default function VerifyPage() {
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-700 dark:text-red-400 text-xs text-center mt-4"
+              className="text-red-600 text-xs text-center mt-4"
             >
               {error}
             </motion.p>
           )}
         </motion.div>
 
-        {/* Verify button - Brown color */}
+        {/* Verify button */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -351,7 +351,7 @@ export default function VerifyPage() {
           disabled={code.join("").length !== 8 || isVerifying}
           whileHover={{ scale: code.join("").length === 8 ? 1.02 : 1 }}
           whileTap={{ scale: code.join("").length === 8 ? 0.98 : 1 }}
-          className="w-full bg-[#92400e] hover:bg-[#78350f] disabled:bg-amber-300 disabled:cursor-not-allowed text-white font-medium py-4 rounded-lg transition-all duration-200 shadow-md disabled:shadow-none"
+          className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-4 rounded-lg transition-all duration-200 shadow-lg disabled:shadow-none"
         >
           {isVerifying ? "Verifying..." : "Verify Code"}
         </motion.button>
@@ -366,12 +366,12 @@ export default function VerifyPage() {
           <button
             onClick={handleResend}
             disabled={isResending}
-            className="inline-flex items-center gap-2 text-sm text-amber-800 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-200 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 transition-colors disabled:opacity-50"
           >
             <RotateCw className={`w-4 h-4 ${isResending ? 'animate-spin' : ''}`} />
             {isResending ? "Sending..." : "Resend Code"}
           </button>
-          <p className="text-xs text-amber-700 dark:text-amber-400 mt-4">
+          <p className="text-xs text-gray-500 mt-4">
             Code expires in 10 minutes
           </p>
         </motion.div>

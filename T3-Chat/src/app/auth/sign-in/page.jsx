@@ -106,295 +106,226 @@ export default function Page() {
   }
 
   if (wasVerified) {
-    return (
-      <section className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4 py-8 overflow-hidden">
+  return (
+    <section className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 overflow-hidden">
+      
+      <div className="w-full max-w-5xl relative z-10">
         
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Floating Circles */}
-          <motion.div
-            className="absolute top-20 left-10 w-72 h-72 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-3xl"
-            animate={{
-              y: [0, -30, 0],
-              x: [0, 20, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <motion.div
-            className="absolute bottom-20 right-10 w-96 h-96 bg-orange-200/30 dark:bg-orange-800/20 rounded-full blur-3xl"
-            animate={{
-              y: [0, 30, 0],
-              x: [0, -20, 0],
-              scale: [1, 1.15, 1],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-200/20 dark:bg-yellow-800/10 rounded-full blur-3xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
+        {/* Workflow Nodes */}
+        <div className="flex items-center justify-center gap-0 relative">
           
-          {/* Subtle Grid Pattern */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#f59e0b08_1px,transparent_1px),linear-gradient(to_bottom,#f59e0b08_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-          
-          {/* Floating Particles */}
-          {[...Array(6)].map((_, i) => (
+          {/* Node 1: Sign In */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative"
+          >
             <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-amber-400/40 dark:bg-amber-600/30 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, -100, 0],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: 5 + Math.random() * 3,
-                repeat: Infinity,
-                delay: Math.random() * 3,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="w-full max-w-5xl relative z-10">
-          
-          {/* Workflow Nodes */}
-          <div className="flex items-center justify-center gap-0 relative">
-            
-            {/* Node 1: Sign In */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="relative"
+              initial={{ borderColor: "#d1d5db" }}
+              animate={{ borderColor: "#10b981" }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="bg-white backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
             >
-              <motion.div
-                initial={{ borderColor: "#d1d5db" }}
-                animate={{ borderColor: "#10b981" }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-                className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Sign In</h3>
-                    <p className="text-xs text-green-600 dark:text-green-400 font-medium">Verified Successfully</p>
-                    <div className="mt-3 space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Status</span>
-                        <span className="text-gray-900 dark:text-gray-100">Complete</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Provider</span>
-                        <span className="text-gray-900 dark:text-gray-100">Google</span>
-                      </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 text-sm mb-1">Sign In</h3>
+                  <p className="text-xs text-green-600 font-medium">Verified Successfully</p>
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Status</span>
+                      <span className="text-gray-900">Complete</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Provider</span>
+                      <span className="text-gray-900">Google</span>
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
+          </motion.div>
 
-            {/* Animated Arrow 1 */}
-            <motion.div 
-              className="relative w-24 h-1 mx-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            >
-              <motion.div
-                className="absolute inset-0 bg-green-500"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.8, delay: 1 }}
-                style={{ transformOrigin: "left" }}
-              />
-              <motion.div
-                className="absolute -right-2 top-1/2 -translate-y-1/2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.8 }}
-              >
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-                </svg>
-              </motion.div>
-            </motion.div>
-
-            {/* Node 2: Email Verification */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="relative"
-            >
-              <motion.div
-                initial={{ borderColor: "#d1d5db" }}
-                animate={{ borderColor: "#10b981" }}
-                transition={{ duration: 0.8, delay: 1.8 }}
-                className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Email Verification</h3>
-                    <p className="text-xs text-green-600 dark:text-green-400 font-medium">Verified Successfully</p>
-                    <div className="mt-3 space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Status</span>
-                        <span className="text-gray-900 dark:text-gray-100">Complete</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Code</span>
-                        <span className="text-gray-900 dark:text-gray-100">Verified</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Animated Arrow 2 */}
-            <motion.div 
-              className="relative w-24 h-1 mx-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.5 }}
-            >
-              <motion.div
-                className="absolute inset-0 bg-amber-500"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.8, delay: 2.5 }}
-                style={{ transformOrigin: "left" }}
-              />
-              <motion.div
-                className="absolute -right-2 top-1/2 -translate-y-1/2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 3.3 }}
-              >
-                <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-                </svg>
-              </motion.div>
-            </motion.div>
-
-            {/* Node 3: One Last Step */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 1 }}
-              className="relative"
-            >
-              <motion.div
-                initial={{ borderColor: "#d1d5db" }}
-                animate={{ borderColor: "#f59e0b" }}
-                transition={{ duration: 0.8, delay: 3.3 }}
-                className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
-              >
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="flex-shrink-0 w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">One Last Step</h3>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Ready to Launch</p>
-                  </div>
-                </div>
-                
-                {/* Get Started Button */}
-                <Button
-                  onClick={async () => {
-                    console.log("✅ User verified, creating authenticated session...");
-                    setIsLoadingGoogle(true);
-                    
-                    // Sign in with Google to create a fresh verified session
-                    await signIn.social({
-                      provider: "google",
-                      callbackURL: "/",
-                    });
-                  }}
-                  disabled={isLoadingGoogle}
-                  className="w-full py-3 px-4 bg-amber-900 hover:bg-amber-800 dark:bg-amber-950 dark:hover:bg-amber-900 text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoadingGoogle ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      />
-                      <span>Launching...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      <svg 
-                        className="w-5 h-5" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M13 7l5 5m0 0l-5 5m5-5H6" 
-                        />
-                      </svg>
-                      <span>Get Started</span>
-                    </div>
-                  )}
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Bottom Text */}
-          <motion.div
+          {/* Animated Arrow 1 */}
+          <motion.div 
+            className="relative w-24 h-1 mx-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 3.5 }}
-            className="mt-8 text-center"
+            transition={{ delay: 0.8 }}
           >
-            <p className="text-sm text-amber-800 dark:text-amber-400">
-              Powered by CodaAI • Your journey begins now
-            </p>
+            <motion.div
+              className="absolute inset-0 bg-green-500"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.8, delay: 1 }}
+              style={{ transformOrigin: "left" }}
+            />
+            <motion.div
+              className="absolute -right-2 top-1/2 -translate-y-1/2"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.8 }}
+            >
+              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+              </svg>
+            </motion.div>
+          </motion.div>
+
+          {/* Node 2: Email Verification */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="relative"
+          >
+            <motion.div
+              initial={{ borderColor: "#d1d5db" }}
+              animate={{ borderColor: "#10b981" }}
+              transition={{ duration: 0.8, delay: 1.8 }}
+              className="bg-white backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 text-sm mb-1">Email Verification</h3>
+                  <p className="text-xs text-green-600 font-medium">Verified Successfully</p>
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Status</span>
+                      <span className="text-gray-900">Complete</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Code</span>
+                      <span className="text-gray-900">Verified</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Animated Arrow 2 - BLACK */}
+          <motion.div 
+            className="relative w-24 h-1 mx-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.5 }}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gray-900"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.8, delay: 2.5 }}
+              style={{ transformOrigin: "left" }}
+            />
+            <motion.div
+              className="absolute -right-2 top-1/2 -translate-y-1/2"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 3.3 }}
+            >
+              <svg className="w-4 h-4 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+              </svg>
+            </motion.div>
+          </motion.div>
+
+          {/* Node 3: One Last Step - BLACK BORDER */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1 }}
+            className="relative"
+          >
+            <motion.div
+              initial={{ borderColor: "#d1d5db" }}
+              animate={{ borderColor: "#1f2937" }}
+              transition={{ duration: 0.8, delay: 3.3 }}
+              className="bg-white backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 text-sm mb-1">One Last Step</h3>
+                  <p className="text-xs text-gray-700 font-medium">Ready to Launch</p>
+                </div>
+              </div>
+              
+              {/* Get Started Button */}
+              <Button
+                onClick={async () => {
+                  console.log("✅ User verified, creating authenticated session...");
+                  setIsLoadingGoogle(true);
+                  
+                  await signIn.social({
+                    provider: "google",
+                    callbackURL: "/",
+                  });
+                }}
+                disabled={isLoadingGoogle}
+                className="w-full py-3 px-4 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingGoogle ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                    />
+                    <span>Launching...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <svg 
+                      className="w-5 h-5" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                      />
+                    </svg>
+                    <span>Get Started</span>
+                  </div>
+                )}
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
-      </section>
-    );
-  }
+
+        {/* Bottom Text */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 3.5 }}
+          className="mt-8 text-center"
+        >
+          <p className="text-sm text-gray-700">
+            Powered by CodaAI • Your journey begins now
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4 overflow-hidden">

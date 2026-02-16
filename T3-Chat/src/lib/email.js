@@ -12,11 +12,15 @@ console.log("PASSWORD SET:", !!process.env.EMAIL_PASSWORD);
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
   port: Number(process.env.EMAIL_PORT) || 587,
-  secure: false,
+  secure: false, // Use TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
+  tls: {
+    // Fix for self-signed certificate error
+    rejectUnauthorized: false
+  }
 });
 
 // Verify on startup
@@ -35,7 +39,6 @@ export async function sendVerificationEmail(email, userName, verificationCode) {
   console.log("Code:", verificationCode);
   
   try {
-    // ✅ ADD AWAIT HERE
     const emailHtml = await render(
       VerificationEmail({ userName, verificationCode })
     );
