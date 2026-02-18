@@ -5,123 +5,197 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RotateCw } from "lucide-react";
 
-// Gmail Envelope Animation Component
+// ── Creative Verifying Animation — Morphing DNA Helix ───────────────────────
+const VerifyingAnimation = () => {
+  const dots = [0, 1, 2, 3, 4, 5, 6, 7];
+
+  return (
+    <div className="flex flex-col items-center gap-8">
+      {/* DNA Helix */}
+      <div className="relative w-24 h-40 flex items-center justify-center">
+        {dots.map((i) => {
+          const offset = (i / dots.length) * Math.PI * 2;
+          return (
+            <div key={i} className="absolute w-full flex justify-between items-center"
+              style={{ top: `${(i / (dots.length - 1)) * 100}%` }}
+            >
+              {/* Left dot */}
+              <motion.div
+                className="w-4 h-4 rounded-full bg-amber-700 shadow-md"
+                animate={{
+                  x: [0, 28, 0, -28, 0],
+                  scale: [1, 1.3, 0.7, 1.3, 1],
+                  opacity: [1, 0.7, 0.3, 0.7, 1],
+                  backgroundColor: ["#b45309", "#d97706", "#f59e0b", "#d97706", "#b45309"],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.15,
+                  ease: "easeInOut",
+                }}
+              />
+
+              {/* Connecting line */}
+              <motion.div
+                className="flex-1 mx-1 h-px"
+                animate={{
+                  opacity: [0.6, 0.1, 0.6],
+                  scaleX: [1, 0.2, 1],
+                  backgroundColor: ["#d97706", "#fbbf24", "#d97706"],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.15,
+                  ease: "easeInOut",
+                }}
+                style={{ background: "#d97706" }}
+              />
+
+              {/* Right dot */}
+              <motion.div
+                className="w-4 h-4 rounded-full bg-amber-500 shadow-md"
+                animate={{
+                  x: [0, -28, 0, 28, 0],
+                  scale: [0.7, 1.3, 1, 1.3, 0.7],
+                  opacity: [0.3, 0.7, 1, 0.7, 0.3],
+                  backgroundColor: ["#f59e0b", "#d97706", "#b45309", "#d97706", "#f59e0b"],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.15,
+                  ease: "easeInOut",
+                }}
+              />
+            </div>
+          );
+        })}
+
+        {/* Ambient glow behind */}
+        <motion.div
+          className="absolute inset-0 rounded-full bg-amber-200 blur-2xl"
+          animate={{ opacity: [0.2, 0.5, 0.2], scale: [0.8, 1.1, 0.8] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+
+      {/* Bouncing dots */}
+      <div className="flex items-end gap-2 h-6">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <motion.div
+            key={i}
+            className="w-2 h-2 rounded-full bg-amber-700"
+            animate={{
+              y: [0, -18, 0],
+              backgroundColor: ["#b45309", "#f59e0b", "#b45309"],
+              scale: [1, 1.3, 1],
+            }}
+            transition={{
+              duration: 0.9,
+              repeat: Infinity,
+              delay: i * 0.12,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      <p
+        className="text-xl font-semibold text-amber-950 dark:text-amber-100"
+        style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+      >
+        Verifying your details...
+      </p>
+    </div>
+  );
+};
+
+// ── Gmail Envelope ────────────────────────────────────────────────────────────
 const GmailEnvelope = () => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div 
+    <div
       className="relative w-32 h-32 flex items-center justify-center cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Email card that pops out */}
+      {/* Hover popup card */}
       <motion.div
         className="absolute z-30"
-        initial={{ y: 15, opacity: 0 }}
+        initial={{ y: 5, opacity: 0 }}
         animate={{
-          y: isHovered ? -35 : 15,
+          y: isHovered ? -32 : 5,
           opacity: isHovered ? 1 : 0,
           rotateX: isHovered ? 0 : 20,
-          scale: isHovered ? 1 : 0.8
+          scale: isHovered ? 1 : 0.8,
         }}
-        transition={{ 
-          type: "spring", 
-          stiffness: 300, 
-          damping: 20,
-          duration: 0.4
-        }}
-        style={{ 
-          transformStyle: "preserve-3d",
-          perspective: "1000px"
-        }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
       >
-        <div className="bg-white rounded-lg shadow-2xl p-4 w-32 border-2 border-gray-200">
-          {/* Gmail logo */}
-          <div className="flex justify-center mb-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.366l8.073-5.873C21.69 2.28 24 3.434 24 5.457z" fill="#EA4335"/>
+        <div className="bg-white rounded-lg shadow-2xl p-2.5 w-24 border border-amber-100">
+          <div className="flex justify-center mb-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.366l8.073-5.873C21.69 2.28 24 3.434 24 5.457z"
+                fill="#EA4335"
+              />
             </svg>
           </div>
-          {/* Email lines */}
-          <div className="space-y-1.5">
-            <div className="h-1 bg-gray-300 rounded w-full"></div>
-            <div className="h-1 bg-gray-300 rounded w-5/6"></div>
-            <div className="h-1 bg-gray-300 rounded w-4/6"></div>
-            <div className="h-1 bg-gray-200 rounded w-3/6"></div>
+          <div className="space-y-0.5">
+            <div className="h-0.5 bg-amber-200 rounded w-full" />
+            <div className="h-0.5 bg-amber-200 rounded w-4/5" />
+            <div className="h-0.5 bg-amber-100 rounded w-3/5" />
+            <div className="h-0.5 bg-amber-100 rounded w-2/5" />
           </div>
-          {/* Verification code preview */}
-          <div className="mt-3 text-center">
-            <div className="text-xs font-bold text-gray-700">••••••••</div>
+          <div className="mt-1.5 text-center">
+            <div className="text-[9px] font-bold text-amber-900">••••••••</div>
           </div>
         </div>
       </motion.div>
 
-      {/* Envelope */}
+      {/* Envelope body */}
       <div className="relative w-28 h-20 z-20">
-        {/* Envelope back */}
         <motion.div
-          className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-lg border border-gray-300"
-          animate={{
-            y: isHovered ? 2 : 0
-          }}
+          className="absolute bottom-0 left-0 w-full h-full bg-white rounded-xl shadow-lg border border-amber-100"
+          animate={{ y: isHovered ? 2 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          {/* @Gmail symbol on envelope */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex items-center gap-0.5">
-              <span className="text-2xl font-bold text-red-600" style={{ fontFamily: 'Arial, sans-serif' }}>
-                @
-              </span>
-              <span className="text-sm font-semibold text-red-600" style={{ fontFamily: 'Arial, sans-serif' }}>
-                Gmail
-              </span>
+              <span className="text-2xl font-bold text-red-600" style={{ fontFamily: "Arial, sans-serif" }}>@</span>
+              <span className="text-sm font-semibold text-red-600" style={{ fontFamily: "Arial, sans-serif" }}>Gmail</span>
             </div>
           </div>
         </motion.div>
 
-        {/* Envelope flap - opens upward */}
+        {/* Flap */}
         <motion.div
           className="absolute top-0 left-0 w-full origin-top"
-          style={{
-            transformStyle: "preserve-3d",
-            perspective: "1000px"
-          }}
-          animate={{
-            rotateX: isHovered ? -180 : 0,
-            z: isHovered ? 15 : 0
-          }}
-          transition={{ 
-            duration: 0.5,
-            type: "spring",
-            stiffness: 200
-          }}
+          style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+          animate={{ rotateX: isHovered ? -180 : 0, z: isHovered ? 15 : 0 }}
+          transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
         >
           <svg width="112" height="50" viewBox="0 0 112 50" className="w-full">
-            <path
-              d="M 0 0 L 56 38 L 112 0 Z"
-              fill="url(#flap-gradient)"
-              className="drop-shadow-lg"
-            />
+            <path d="M 0 0 L 56 38 L 112 0 Z" fill="url(#flap-amber)" />
             <defs>
-              <linearGradient id="flap-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#e5e7eb" />
-                <stop offset="100%" stopColor="#d1d5db" />
+              <linearGradient id="flap-amber" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="100%" stopColor="#fef3c7" />
               </linearGradient>
             </defs>
           </svg>
         </motion.div>
 
-        {/* Envelope front flap lines */}
         <motion.div
           className="absolute bottom-0 left-0 w-full"
-          animate={{
-            opacity: isHovered ? 0.3 : 0.5
-          }}
+          animate={{ opacity: isHovered ? 0.3 : 0.5 }}
         >
           <svg width="112" height="40" viewBox="0 0 112 40" className="w-full">
-            <line x1="0" y1="40" x2="56" y2="0" stroke="rgba(0,0,0,0.1)" strokeWidth="1.5"/>
-            <line x1="112" y1="40" x2="56" y2="0" stroke="rgba(0,0,0,0.1)" strokeWidth="1.5"/>
+            <line x1="0" y1="40" x2="56" y2="0" stroke="rgba(0,0,0,0.08)" strokeWidth="1.5" />
+            <line x1="112" y1="40" x2="56" y2="0" stroke="rgba(0,0,0,0.08)" strokeWidth="1.5" />
           </svg>
         </motion.div>
       </div>
@@ -129,11 +203,12 @@ const GmailEnvelope = () => {
   );
 };
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function VerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-  
+
   const [code, setCode] = useState(["", "", "", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
@@ -147,59 +222,44 @@ export default function VerifyPage() {
   const handleChange = (index, value) => {
     if (value.length > 1) return;
     if (!/^\d*$/.test(value)) return;
-    
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
     setError("");
-
-    if (value && index < 7) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (value && index < 7) inputRefs.current[index + 1]?.focus();
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
+    if (e.key === "Backspace" && !code[index] && index > 0)
       inputRefs.current[index - 1]?.focus();
-    }
   };
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 8);
-    const newCode = pastedData.split("");
-    
-    while (newCode.length < 8) {
-      newCode.push("");
-    }
-    
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 8);
+    const newCode = pasted.split("");
+    while (newCode.length < 8) newCode.push("");
     setCode(newCode);
-    if (pastedData.length > 0) {
-      inputRefs.current[Math.min(pastedData.length, 7)]?.focus();
-    }
+    if (pasted.length > 0)
+      inputRefs.current[Math.min(pasted.length, 7)]?.focus();
   };
 
   const handleVerify = async () => {
     const verificationCode = code.join("");
-    
     if (verificationCode.length !== 8) {
       setError("Please enter the complete verification code");
       return;
     }
-
     setIsVerifying(true);
-    
     try {
       const response = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code: verificationCode }),
       });
-
       const data = await response.json();
-
       if (data.success) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise((r) => setTimeout(r, 1500));
         window.location.href = "/auth/sign-in?verified=true";
       } else {
         setError(data.error || "Invalid verification code. Please try again.");
@@ -207,7 +267,7 @@ export default function VerifyPage() {
         setCode(["", "", "", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
-    } catch (error) {
+    } catch {
       setError("Verification failed. Please try again.");
       setIsVerifying(false);
     }
@@ -216,18 +276,12 @@ export default function VerifyPage() {
   const handleResend = async () => {
     setIsResending(true);
     setError("");
-    
     try {
       const response = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          userName: "there",
-          provider: "resend",
-        }),
+        body: JSON.stringify({ email, userName: "there", provider: "resend" }),
       });
-
       const data = await response.json();
       if (data.success) {
         setCode(["", "", "", "", "", "", "", ""]);
@@ -235,81 +289,82 @@ export default function VerifyPage() {
       } else {
         setError("Failed to resend code. Please try again.");
       }
-    } catch (error) {
+    } catch {
       setError("Failed to resend code. Please try again.");
     } finally {
       setIsResending(false);
     }
   };
 
+  // ── Verifying screen ────────────────────────────────────────────────────────
   if (isVerifying) {
     return (
-      <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <section className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-6"
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 border-4 border-gray-700 border-t-transparent rounded-full"
-          />
-          <p className="text-2xl font-medium text-gray-800">
-            Verifying your details...
-          </p>
+          <VerifyingAnimation />
         </motion.div>
       </section>
     );
   }
 
+  // ── Main form ───────────────────────────────────────────────────────────────
   return (
-    <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12">
+    <section className="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md flex flex-col items-center"
       >
-        {/* Gmail Envelope Animation */}
+        {/* Gmail Envelope */}
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="flex justify-center mb-10"
+          className="mb-8"
         >
           <GmailEnvelope />
         </motion.div>
 
-        {/* Title and description */}
+        {/* Title */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          transition={{ delay: 0.3 }}
           className="text-center mb-10"
         >
-          <h1 className="text-2xl font-semibold text-gray-900 mb-3">
-            Verify Your Email
+          <h1
+            className="text-2xl font-bold text-amber-950 dark:text-amber-100 mb-3"
+            style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+          >
+            Confirm Email
           </h1>
-          <p className="text-gray-600 text-sm leading-relaxed px-4">
-            We have sent a verification code to your email
+          <p
+            className="text-amber-800 dark:text-amber-300 text-sm leading-relaxed"
+            style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+          >
+            Please enter the 8-digit code sent to
           </p>
-          <p className="text-gray-900 font-medium text-sm mt-1">
+          <p
+            className="text-amber-950 dark:text-amber-100 font-semibold text-sm mt-1"
+            style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+          >
             {email}
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Please enter the verification code below
           </p>
         </motion.div>
 
-        {/* Verification code inputs */}
+        {/* Code inputs */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          className="mb-8"
+          transition={{ delay: 0.4 }}
+          className="w-full mb-8"
         >
-          <div className="flex gap-3 justify-center mb-2" onPaste={handlePaste}>
+          <div className="flex gap-2 justify-center mb-2" onPaste={handlePaste}>
             {code.map((digit, index) => (
               <motion.input
                 key={index}
@@ -320,61 +375,65 @@ export default function VerifyPage() {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-16 text-center text-3xl font-semibold bg-gray-50 text-gray-900 border-b-3 border-gray-300 focus:border-gray-700 focus:bg-white outline-none transition-all duration-200 shadow-sm"
-                style={{ 
-                  borderBottom: '3px solid',
-                  borderRadius: '0',
-                  fontFamily: '"Segoe UI", system-ui, sans-serif'
-                }}
+                className="w-12 h-16 text-center text-3xl font-semibold bg-white/70 text-amber-950 border-2 border-amber-200 focus:border-amber-800 outline-none transition-all duration-200 rounded-2xl hover:border-amber-400 shadow-sm backdrop-blur-sm"
+                style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
                 whileFocus={{ scale: 1.05 }}
               />
             ))}
           </div>
 
-          {error && (
-            <motion.p
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-red-600 text-xs text-center mt-4"
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="text-red-600 text-xs text-center mt-4"
+                style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Resend */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mb-8"
+        >
+          <p
+            className="text-sm text-amber-800 dark:text-amber-300"
+            style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+          >
+            Haven't got email?{" "}
+            <button
+              onClick={handleResend}
+              disabled={isResending}
+              className="text-amber-950 dark:text-amber-100 font-semibold hover:underline transition-all disabled:opacity-50 inline-flex items-center gap-1"
             >
-              {error}
-            </motion.p>
-          )}
+              {isResending && <RotateCw className="w-3 h-3 animate-spin" />}
+              Resend Code
+            </button>
+          </p>
         </motion.div>
 
         {/* Verify button */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 }}
           onClick={handleVerify}
           disabled={code.join("").length !== 8 || isVerifying}
           whileHover={{ scale: code.join("").length === 8 ? 1.02 : 1 }}
           whileTap={{ scale: code.join("").length === 8 ? 0.98 : 1 }}
-          className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-4 rounded-lg transition-all duration-200 shadow-lg disabled:shadow-none"
+          className="w-full bg-amber-800 hover:bg-amber-700 disabled:bg-amber-200 dark:disabled:bg-amber-900 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl disabled:shadow-none"
+          style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
         >
-          {isVerifying ? "Verifying..." : "Verify Code"}
+          {isVerifying ? "Verifying..." : "Verify Email"}
         </motion.button>
-
-        {/* Resend code */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-8 text-center"
-        >
-          <button
-            onClick={handleResend}
-            disabled={isResending}
-            className="inline-flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 transition-colors disabled:opacity-50"
-          >
-            <RotateCw className={`w-4 h-4 ${isResending ? 'animate-spin' : ''}`} />
-            {isResending ? "Sending..." : "Resend Code"}
-          </button>
-          <p className="text-xs text-gray-500 mt-4">
-            Code expires in 10 minutes
-          </p>
-        </motion.div>
       </motion.div>
     </section>
   );

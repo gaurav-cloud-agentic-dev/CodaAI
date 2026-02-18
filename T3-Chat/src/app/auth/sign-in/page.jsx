@@ -30,7 +30,6 @@ export default function Page() {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % roles.length);
     }, 3000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -41,15 +40,12 @@ export default function Page() {
         setIsClearing(false);
         return;
       }
-
       if (session?.user) {
         console.log("Clearing existing session...");
         try {
           await signOut({
             fetchOptions: {
-              onSuccess: () => {
-                console.log("Session cleared");
-              },
+              onSuccess: () => console.log("Session cleared"),
             },
           });
         } catch (error) {
@@ -58,17 +54,13 @@ export default function Page() {
       }
       setIsClearing(false);
     };
-
     clearSession();
   }, [session, wasVerified]);
 
   const handleGithubSignIn = async () => {
     setIsLoadingGithub(true);
     try {
-      await signIn.social({
-        provider: "github",
-        callbackURL: "/auth/callback",
-      });
+      await signIn.social({ provider: "github", callbackURL: "/auth/callback" });
     } catch (error) {
       setIsLoadingGithub(false);
       console.error("GitHub sign-in error:", error);
@@ -78,10 +70,7 @@ export default function Page() {
   const handleGoogleSignIn = async () => {
     setIsLoadingGoogle(true);
     try {
-      await signIn.social({
-        provider: "google",
-        callbackURL: "/auth/callback",
-      });
+      await signIn.social({ provider: "google", callbackURL: "/auth/callback" });
     } catch (error) {
       setIsLoadingGoogle(false);
       console.error("Google sign-in error:", error);
@@ -106,237 +95,228 @@ export default function Page() {
   }
 
   if (wasVerified) {
-  return (
-    <section className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 overflow-hidden">
-      
-      <div className="w-full max-w-5xl relative z-10">
-        
-        {/* Workflow Nodes */}
-        <div className="flex items-center justify-center gap-0 relative">
-          
-          {/* Node 1: Sign In */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="relative"
-          >
-            <motion.div
-              initial={{ borderColor: "#d1d5db" }}
-              animate={{ borderColor: "#10b981" }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="bg-white backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1">Sign In</h3>
-                  <p className="text-xs text-green-600 font-medium">Verified Successfully</p>
-                  <div className="mt-3 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Status</span>
-                      <span className="text-gray-900">Complete</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Provider</span>
-                      <span className="text-gray-900">Google</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+    return (
+      // ── CHANGED: background now matches amber theme ──────────────────────
+      <section className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4 py-8 overflow-hidden">
 
-          {/* Animated Arrow 1 */}
-          <motion.div 
-            className="relative w-24 h-1 mx-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-green-500"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.8, delay: 1 }}
-              style={{ transformOrigin: "left" }}
-            />
-            <motion.div
-              className="absolute -right-2 top-1/2 -translate-y-1/2"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.8 }}
-            >
-              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-              </svg>
-            </motion.div>
-          </motion.div>
+        <div className="w-full max-w-5xl relative z-10">
 
-          {/* Node 2: Email Verification */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="relative"
-          >
-            <motion.div
-              initial={{ borderColor: "#d1d5db" }}
-              animate={{ borderColor: "#10b981" }}
-              transition={{ duration: 0.8, delay: 1.8 }}
-              className="bg-white backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1">Email Verification</h3>
-                  <p className="text-xs text-green-600 font-medium">Verified Successfully</p>
-                  <div className="mt-3 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Status</span>
-                      <span className="text-gray-900">Complete</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Code</span>
-                      <span className="text-gray-900">Verified</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          {/* Workflow Nodes */}
+          <div className="flex items-center justify-center gap-0 relative">
 
-          {/* Animated Arrow 2 - BLACK */}
-          <motion.div 
-            className="relative w-24 h-1 mx-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2.5 }}
-          >
+            {/* Node 1: Sign In */}
             <motion.div
-              className="absolute inset-0 bg-gray-900"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.8, delay: 2.5 }}
-              style={{ transformOrigin: "left" }}
-            />
-            <motion.div
-              className="absolute -right-2 top-1/2 -translate-y-1/2"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 3.3 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="relative"
             >
-              <svg className="w-4 h-4 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-              </svg>
-            </motion.div>
-          </motion.div>
-
-          {/* Node 3: One Last Step - BLACK BORDER */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1 }}
-            className="relative"
-          >
-            <motion.div
-              initial={{ borderColor: "#d1d5db" }}
-              animate={{ borderColor: "#1f2937" }}
-              transition={{ duration: 0.8, delay: 3.3 }}
-              className="bg-white backdrop-blur-sm rounded-xl shadow-lg p-6 w-64 border-4"
-            >
-              <div className="flex items-start gap-3 mb-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1">One Last Step</h3>
-                  <p className="text-xs text-gray-700 font-medium">Ready to Launch</p>
-                </div>
-              </div>
-              
-              {/* Get Started Button */}
-              <Button
-                onClick={async () => {
-                  console.log("✅ User verified, creating authenticated session...");
-                  setIsLoadingGoogle(true);
-                  
-                  await signIn.social({
-                    provider: "google",
-                    callbackURL: "/",
-                  });
-                }}
-                disabled={isLoadingGoogle}
-                className="w-full py-3 px-4 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              <motion.div
+                initial={{ borderColor: "rgba(217, 119, 6, 0.2)" }}
+                animate={{ borderColor: "#10b981" }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-6 w-64 border-4"
+                style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
               >
-                {isLoadingGoogle ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                    />
-                    <span>Launching...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <svg 
-                      className="w-5 h-5" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M13 7l5 5m0 0l-5 5m5-5H6" 
-                      />
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-green-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Get Started</span>
                   </div>
-                )}
-              </Button>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-amber-950 dark:text-amber-100 text-sm mb-1">Sign In</h3>
+                    <p className="text-xs text-green-600 font-medium">Verified Successfully</p>
+                    <div className="mt-3 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-400">Status</span>
+                        <span className="text-amber-950 dark:text-amber-100">Complete</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-400">Provider</span>
+                        <span className="text-amber-950 dark:text-amber-100">Google</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
+
+            {/* Animated Arrow 1 */}
+            <motion.div
+              className="relative w-24 h-1 mx-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <motion.div
+                className="absolute inset-0 bg-green-500 rounded-full"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.8, delay: 1 }}
+                style={{ transformOrigin: "left" }}
+              />
+              <motion.div
+                className="absolute -right-2 top-1/2 -translate-y-1/2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.8 }}
+              >
+                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+                </svg>
+              </motion.div>
+            </motion.div>
+
+            {/* Node 2: Email Verification */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="relative"
+            >
+              <motion.div
+                initial={{ borderColor: "rgba(217, 119, 6, 0.2)" }}
+                animate={{ borderColor: "#10b981" }}
+                transition={{ duration: 0.8, delay: 1.8 }}
+                className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-6 w-64 border-4"
+                style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-green-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-amber-950 dark:text-amber-100 text-sm mb-1">Email Verification</h3>
+                    <p className="text-xs text-green-600 font-medium">Verified Successfully</p>
+                    <div className="mt-3 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-400">Status</span>
+                        <span className="text-amber-950 dark:text-amber-100">Complete</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-amber-700 dark:text-amber-400">Code</span>
+                        <span className="text-amber-950 dark:text-amber-100">Verified</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Animated Arrow 2 - AMBER */}
+            <motion.div
+              className="relative w-24 h-1 mx-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.5 }}
+            >
+              <motion.div
+                className="absolute inset-0 bg-amber-800 rounded-full"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.8, delay: 2.5 }}
+                style={{ transformOrigin: "left" }}
+              />
+              <motion.div
+                className="absolute -right-2 top-1/2 -translate-y-1/2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 3.3 }}
+              >
+                <svg className="w-4 h-4 text-amber-800" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+                </svg>
+              </motion.div>
+            </motion.div>
+
+            {/* Node 3: One Last Step - AMBER BORDER */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1 }}
+              className="relative"
+            >
+              <motion.div
+                initial={{ borderColor: "rgba(217, 119, 6, 0.2)" }}
+                animate={{ borderColor: "#92400e" }}
+                transition={{ duration: 0.8, delay: 3.3 }}
+                className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-6 w-64 border-4"
+                style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+              >
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="flex-shrink-0 w-10 h-10 bg-amber-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-amber-950 dark:text-amber-100 text-sm mb-1">One Last Step</h3>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Ready to Launch</p>
+                  </div>
+                </div>
+
+                {/* Get Started Button - AMBER */}
+                <Button
+                  onClick={async () => {
+                    console.log("✅ User verified, creating authenticated session...");
+                    setIsLoadingGoogle(true);
+                    await signIn.social({ provider: "google", callbackURL: "/" });
+                  }}
+                  disabled={isLoadingGoogle}
+                  className="w-full py-3 px-4 bg-amber-800 hover:bg-amber-700 text-white rounded-2xl font-semibold text-sm shadow-[0_4px_20px_0_rgba(146,64,14,0.3)] hover:shadow-[0_6px_24px_0_rgba(146,64,14,0.4)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoadingGoogle ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      />
+                      <span>Launching...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                      <span>Get Started</span>
+                    </div>
+                  )}
+                </Button>
+              </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Bottom Text */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 3.5 }}
+            className="mt-8 text-center"
+          >
+            <p
+              className="text-sm text-amber-800 dark:text-amber-400"
+              style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
+            >
+              Powered by CodaAI • Your journey begins now
+            </p>
           </motion.div>
         </div>
-
-        {/* Bottom Text */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 3.5 }}
-          className="mt-8 text-center"
-        >
-          <p className="text-sm text-gray-700">
-            Powered by CodaAI • Your journey begins now
-          </p>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
+      </section>
+    );
+  }
 
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 px-4 overflow-hidden">
-      
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="flex flex-col items-center text-center space-y-8 max-w-5xl w-full"
       >
-
         <AnimatePresence mode="wait">
           <motion.div
             key={roles[currentIndex].status}
@@ -361,10 +341,10 @@ export default function Page() {
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif tracking-tight flex flex-nowrap items-center justify-center gap-5">
             <span className="text-amber-950 dark:text-amber-100">Built for</span>
             <span className="text-amber-700 dark:text-amber-400 flex items-center gap-3">
-              <svg 
-                className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+              <svg
+                className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
                 stroke="currentColor"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -391,7 +371,7 @@ export default function Page() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="text-amber-900 dark:text-amber-100 text-base md:text-lg lg:text-xl max-w-2xl leading-relaxed font-normal tracking-wide"
         >
-          Where intelligence meets conversation. Crafted for those who demand precision, 
+          Where intelligence meets conversation. Crafted for those who demand precision,
           elegance, and performance at scale.
         </motion.p>
 
@@ -401,11 +381,7 @@ export default function Page() {
           transition={{ delay: 0.8, duration: 0.6 }}
           className="flex flex-row gap-5 mt-8 w-full max-w-xl justify-center"
         >
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="flex-1"
-          >
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
             <Button
               variant="outline"
               className="w-full px-5 py-3 flex flex-row justify-center items-center gap-3 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
@@ -419,32 +395,18 @@ export default function Page() {
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                   />
-                  <span className="font-semibold text-white">
-                    Authenticating...
-                  </span>
+                  <span className="font-semibold text-white">Authenticating...</span>
                 </>
               ) : (
                 <>
-                  <Image 
-                    src="/Github.png" 
-                    alt="Github" 
-                    width={22} 
-                    height={22}
-                    className="invert brightness-0"
-                  />
-                  <span className="font-semibold text-white">
-                    GitHub
-                  </span>
+                  <Image src="/Github.png" alt="Github" width={22} height={22} className="invert brightness-0" />
+                  <span className="font-semibold text-white">GitHub</span>
                 </>
               )}
             </Button>
           </motion.div>
 
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="flex-1"
-          >
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
             <Button
               variant="outline"
               className="w-full px-5 py-3 flex flex-row justify-center items-center gap-3 bg-amber-800 dark:bg-amber-900 border border-amber-900/30 dark:border-amber-800/30 hover:bg-amber-700 dark:hover:bg-amber-800 transition-all duration-300 shadow-sm text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
@@ -458,27 +420,17 @@ export default function Page() {
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                   />
-                  <span className="font-semibold text-white">
-                    Authenticating...
-                  </span>
+                  <span className="font-semibold text-white">Authenticating...</span>
                 </>
               ) : (
                 <>
-                  <Image 
-                    src="/Google-Logo.png" 
-                    alt="Google" 
-                    width={22} 
-                    height={22}
-                  />
-                  <span className="font-semibold text-white">
-                    Google
-                  </span>
+                  <Image src="/Google-Logo.png" alt="Google" width={22} height={22} />
+                  <span className="font-semibold text-white">Google</span>
                 </>
               )}
             </Button>
           </motion.div>
         </motion.div>
-
       </motion.div>
     </section>
   );
