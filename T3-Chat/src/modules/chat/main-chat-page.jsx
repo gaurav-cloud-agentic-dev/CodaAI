@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Plus,
   Paperclip,
@@ -20,11 +20,20 @@ import {
   Check,
   Mic,
 } from "lucide-react";
+import ModelSelector from "./model-selector";
 
 const MainChatPage = () => {
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedModel, setSelectedModel] = useState({
+    id: "anthropic/claude-sonnet-4-5-20250929",
+    name: "Claude Sonnet 4.5"
+  });
+  
+  // Reference for model selector button
+  const modelButtonRef = useRef(null);
 
   const plusMenuItems = [
     { id: "files", icon: Paperclip, label: "Add files or photos", action: () => console.log("Add files") },
@@ -51,177 +60,70 @@ const MainChatPage = () => {
     return "Evening";
   };
 
+  const handleModelSelect = (model) => {
+    setSelectedModel(model);
+    setIsModelSelectorOpen(false);
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <div
       className="flex-1 flex flex-col items-center justify-center h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-yellow-950 p-8 relative overflow-hidden"
       style={{
         fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
       }}
     >
-      {/* Animated Background Elements with More Movement */}
+      {/* Subtle Background Orb */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
-        animate={{ 
-          opacity: 0.3, 
-          scale: 1.2,
-          rotate: 45,
-          x: [0, 50, 0],
-          y: [0, -30, 0]
-        }}
-        transition={{ 
-          duration: 8, 
-          repeat: Infinity,
-          repeatType: "reverse",
-          ease: "easeInOut"
-        }}
-        className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-orange-300/50 to-amber-300/50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-full blur-3xl pointer-events-none"
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.5, rotate: 45 }}
-        animate={{ 
-          opacity: 0.3, 
-          scale: 1.2,
-          rotate: -45,
-          x: [0, -50, 0],
-          y: [0, 30, 0]
-        }}
-        transition={{ 
-          duration: 10, 
-          repeat: Infinity,
-          repeatType: "reverse",
-          ease: "easeInOut",
-          delay: 1
-        }}
-        className="absolute bottom-20 left-20 w-96 h-96 bg-gradient-to-br from-yellow-300/50 to-orange-300/50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-full blur-3xl pointer-events-none"
-      />
-
-      {/* Pulsing gradient orb in center */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none blur-3xl"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none blur-3xl opacity-20"
         animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.2, 0.35, 0.2],
-          rotate: [0, 180, 360]
+          scale: [1, 1.1, 1],
+          opacity: [0.15, 0.25, 0.15],
         }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         style={{
-          background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, rgba(249, 115, 22, 0.3) 50%, transparent 70%)'
+          background: 'radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%)'
         }}
       />
-
-      {/* Floating particles */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-3 h-3 bg-amber-400/40 dark:bg-amber-600/30 rounded-full pointer-events-none"
-          style={{
-            left: `${10 + i * 12}%`,
-            top: `${20 + (i % 3) * 25}%`,
-          }}
-          animate={{
-            y: [0, -100, 0],
-            x: [0, Math.sin(i) * 50, 0],
-            opacity: [0, 0.8, 0],
-            scale: [0.5, 1.5, 0.5]
-          }}
-          transition={{
-            duration: 4 + i * 0.5,
-            repeat: Infinity,
-            delay: i * 0.8,
-            ease: "easeInOut"
-          }}
-        />
-      ))}
 
       {/* Top Section */}
       <div className="w-full max-w-4xl flex flex-col items-center relative z-10">
-        {/* Plan Badge with bounce */}
+        {/* Plan Badge */}
         <motion.div
-          initial={{ opacity: 0, y: -50, scale: 0.5 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ 
-            duration: 0.6, 
-            delay: 0.1,
-            type: "spring",
-            stiffness: 200,
-            damping: 15
-          }}
-          whileHover={{ scale: 1.05, rotate: [0, -2, 2, 0] }}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
           className="flex items-center gap-2 mb-6 px-4 py-2 bg-white/70 dark:bg-amber-900/70 backdrop-blur-sm rounded-full shadow-sm border border-amber-200 dark:border-amber-700"
         >
           <span className="text-sm text-amber-800 dark:text-amber-300">Free plan</span>
           <span className="text-amber-400 dark:text-amber-600">·</span>
           <motion.button 
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.15 }}
             className="text-sm text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 transition-colors"
           >
             Upgrade
           </motion.button>
         </motion.div>
 
-        {/* Greeting with staggered letter animation */}
+        {/* Greeting */}
         <motion.h1
-          initial={{ opacity: 0, y: -30 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ 
-            duration: 0.8, 
-            delay: 0.2,
-            type: "spring",
-            stiffness: 100
-          }}
-          className="text-4xl md:text-5xl font-serif text-amber-950 dark:text-amber-100 mb-12 flex items-center gap-3"
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="text-4xl md:text-5xl font-serif text-amber-950 dark:text-amber-100 mb-12"
         >
-          <motion.span 
-            animate={{ 
-              rotate: [0, -10, 10, -10, 0],
-              scale: [1, 1.2, 1]
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 3
-            }}
-            className="text-orange-500"
-          >
-            ✦
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            {getGreeting()}, 
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-          >
-            Gaurav Salunke
-          </motion.span>
+          {getGreeting()}, Gaurav Salunke
         </motion.h1>
 
-        {/* Input Box with dynamic entrance */}
+        {/* Input Box */}
         <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ 
-            duration: 0.7, 
-            delay: 0.3,
-            type: "spring",
-            stiffness: 120
-          }}
-          whileHover={{ 
-            scale: 1.02,
-            boxShadow: "0 20px 40px -10px rgba(217, 119, 6, 0.3)"
-          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
           className="w-full max-w-2xl mb-6"
         >
-          <div className="relative bg-white/80 dark:bg-amber-900/80 backdrop-blur-md rounded-xl shadow-lg border border-amber-200 dark:border-amber-700 overflow-visible transition-all duration-300">
+          <div className="relative bg-white/80 dark:bg-amber-900/80 backdrop-blur-md rounded-xl shadow-lg border border-amber-200 dark:border-amber-700 overflow-visible transition-all duration-200">
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -237,22 +139,18 @@ const MainChatPage = () => {
                 <div className="relative">
                   <motion.button
                     onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-                    whileHover={{ 
-                      scale: 1.2, 
-                      rotate: 180,
-                      transition: { duration: 0.3 }
-                    }}
-                    whileTap={{ scale: 0.9, rotate: 90 }}
-                    className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors duration-200"
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors duration-150"
                   >
                     <Plus className="w-5 h-5 text-amber-800 dark:text-amber-300" />
                   </motion.button>
 
-                  {/* Plus Menu Dropdown - IMPROVED */}
+                  {/* Plus Menu Dropdown */}
                   <AnimatePresence>
                     {isPlusMenuOpen && (
                       <>
-                        {/* Backdrop - Click to close */}
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -262,49 +160,28 @@ const MainChatPage = () => {
                           className="fixed inset-0 z-30"
                         />
                         <motion.div
-                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          initial={{ opacity: 0, y: 5, scale: 0.98 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                          transition={{ 
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 35,
-                            mass: 0.5
-                          }}
+                          exit={{ opacity: 0, y: 5, scale: 0.98 }}
+                          transition={{ duration: 0.15 }}
                           className="absolute left-0 bottom-[calc(100%+8px)] w-72 bg-white/95 dark:bg-amber-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-amber-200/50 dark:border-amber-700/50 py-2 z-40 overflow-hidden"
                         >
-                          {plusMenuItems.map((item, index) => (
+                          {plusMenuItems.map((item) => (
                             <motion.button
                               key={item.id}
-                              initial={{ opacity: 0, x: -15 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ 
-                                delay: index * 0.04,
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30
-                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 item.action();
                                 setIsPlusMenuOpen(false);
                               }}
-                              whileHover={{ 
-                                x: 6,
-                                backgroundColor: "rgba(217, 119, 6, 0.15)",
-                                transition: { duration: 0.15 }
-                              }}
+                              whileHover={{ x: 4, backgroundColor: "rgba(217, 119, 6, 0.12)" }}
                               whileTap={{ scale: 0.98 }}
-                              className={`w-full px-4 py-2.5 flex items-center gap-3 transition-colors duration-150 ${
+                              transition={{ duration: 0.15 }}
+                              className={`w-full px-4 py-2.5 flex items-center gap-3 ${
                                 item.isBlue ? "text-blue-600 dark:text-blue-400" : "text-amber-950 dark:text-amber-100"
                               }`}
                             >
-                              <motion.div
-                                whileHover={{ rotate: 15, scale: 1.15 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <item.icon className="w-5 h-5" />
-                              </motion.div>
+                              <item.icon className="w-5 h-5" />
                               <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
                               {item.hasArrow && (
                                 <ChevronRight className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -321,27 +198,25 @@ const MainChatPage = () => {
 
               {/* Right Side - Model Selector & Voice */}
               <div className="flex items-center gap-2">
+                {/* Model Selector Button */}
                 <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-3 py-1.5 text-sm text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-all duration-200 flex items-center gap-2"
+                  ref={modelButtonRef}
+                  onClick={() => setIsModelSelectorOpen(true)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="px-3 py-1.5 text-sm text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors duration-150 flex items-center gap-2"
                 >
-                  Sonnet 4.5
-                  <motion.div
-                    animate={{ rotate: [0, 180, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <ChevronRight className="w-3 h-3 rotate-90" />
-                  </motion.div>
+                  {selectedModel.name}
+                  <ChevronRight className="w-3 h-3 rotate-90" />
                 </motion.button>
+
+                {/* Voice Button */}
                 <motion.button
-                  whileHover={{ 
-                    scale: 1.15,
-                    rotate: [0, -10, 10, 0]
-                  }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors duration-200"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors duration-150"
                 >
                   <Mic className="w-5 h-5 text-amber-800 dark:text-amber-300" />
                 </motion.button>
@@ -350,53 +225,42 @@ const MainChatPage = () => {
           </div>
         </motion.div>
 
-        {/* Category Pills - FIXED HOVER EFFECTS */}
+        {/* Category Pills */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
           className="flex flex-wrap items-center justify-center gap-3"
         >
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <motion.button
               key={category.id}
-              initial={{ opacity: 0, y: 30, rotate: -10 }}
-              animate={{ opacity: 1, y: 0, rotate: 0 }}
-              transition={{ 
-                duration: 0.5,
-                delay: 0.6 + index * 0.1,
-                type: "spring",
-                stiffness: 150
-              }}
-              whileHover={{ 
-                scale: 1.08,
-                y: -3,
-                boxShadow: "0 8px 25px -5px rgba(217, 119, 6, 0.35)",
-                transition: { duration: 0.2 }
-              }}
-              whileTap={{ scale: 0.96, y: 0 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
               onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-200 backdrop-blur-sm ${
+              className={`px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-150 backdrop-blur-sm ${
                 selectedCategory === category.id
                   ? "bg-amber-800 dark:bg-amber-700 text-white shadow-lg"
                   : "bg-white/70 dark:bg-amber-900/70 text-amber-900 dark:text-amber-200 shadow-md border border-amber-200 dark:border-amber-700"
               }`}
             >
-              <motion.div
-                animate={selectedCategory === category.id ? {
-                  rotate: [0, 360],
-                  scale: [1, 1.2, 1]
-                } : {}}
-                transition={{ duration: 0.6 }}
-              >
-                <category.icon className={`w-4 h-4 ${selectedCategory === category.id ? "text-white" : category.color}`} />
-              </motion.div>
+              <category.icon className={`w-4 h-4 ${selectedCategory === category.id ? "text-white" : category.color}`} />
               {category.label}
             </motion.button>
           ))}
         </motion.div>
       </div>
-    </motion.div>
+
+      {/* Model Selector Modal */}
+      <ModelSelector
+        isOpen={isModelSelectorOpen}
+        onClose={() => setIsModelSelectorOpen(false)}
+        selectedModel={selectedModel}
+        onSelectModel={handleModelSelect}
+        triggerRef={modelButtonRef}
+      />
+    </div>
   );
 };
 
