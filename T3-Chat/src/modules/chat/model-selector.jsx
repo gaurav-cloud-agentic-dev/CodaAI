@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Search, Star, Eye, Info, X, ChevronRight, Filter, Check } from "lucide-react";
+import { Search, Star, Eye, Info, X, ChevronRight, Filter, Check, Wrench, FileText, Calendar, TrendingUp } from "lucide-react";
 
 const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
   const [models, setModels] = useState([]);
@@ -10,6 +10,7 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [favoriteModels, setFavoriteModels] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [infoModel, setInfoModel] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,10 +39,8 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
     );
   };
 
-  // Filter companies we want to display
   const allowedCompanies = ['openai', 'google', 'anthropic', 'meta-llama', 'x-ai', 'deepseek'];
 
-  // Group models by company
   const groupedModels = models.reduce((acc, model) => {
     const company = model.id.split("/")[0]?.toLowerCase() || "other";
     
@@ -54,14 +53,12 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
     return acc;
   }, {});
 
-  // Auto-select first company when modal opens
   useEffect(() => {
     if (isOpen && !selectedCompany && Object.keys(groupedModels).length > 0) {
       setSelectedCompany(Object.keys(groupedModels)[0]);
     }
   }, [isOpen, groupedModels]);
 
-  // Filter models based on search
   const filteredModels = selectedCompany && groupedModels[selectedCompany]
     ? groupedModels[selectedCompany].filter(
         (model) =>
@@ -132,11 +129,230 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
     );
   };
 
+  // Get random feature badges for each model
+  const getModelFeatures = (modelId) => {
+    const allFeatures = [
+      { icon: Eye, label: "Vision", color: "bg-gradient-to-r from-emerald-500 to-green-600" },
+      { icon: Wrench, label: "Tool Calling", color: "bg-gradient-to-r from-orange-500 to-red-600" },
+      { icon: FileText, label: "PDF Comprehension", color: "bg-gradient-to-r from-purple-500 to-violet-600" },
+      { icon: FileText, label: "Code Generation", color: "bg-gradient-to-r from-blue-500 to-cyan-600" },
+      { icon: FileText, label: "Reasoning", color: "bg-gradient-to-r from-pink-500 to-rose-600" },
+      { icon: FileText, label: "Long Context", color: "bg-gradient-to-r from-indigo-500 to-purple-600" },
+    ];
+    
+    // Generate consistent random features based on model ID
+    const hash = modelId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const startIndex = hash % allFeatures.length;
+    return [
+      allFeatures[startIndex % allFeatures.length],
+      allFeatures[(startIndex + 1) % allFeatures.length],
+      allFeatures[(startIndex + 2) % allFeatures.length],
+    ];
+  };
+
+  // Model Info Dialog Component
+  const ModelInfoDialog = ({ model, onClose }) => {
+    if (!model) return null;
+
+    const company = model.id.split("/")[0]?.toLowerCase() || "other";
+    const features = getModelFeatures(model.id);
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-900 dark:via-orange-900 dark:to-yellow-900 rounded-2xl shadow-2xl border-2 border-amber-200 dark:border-amber-700 overflow-hidden"
+          style={{ maxHeight: '90vh' }}
+        >
+          {/* Header */}
+          <div className="p-6 border-b-2 border-amber-200 dark:border-amber-700 bg-white/40 dark:bg-amber-950/40">
+            <div className="flex items-start gap-4">
+              <CompanyIconDisplay company={company} size="large" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h2 className="text-2xl font-bold text-amber-950 dark:text-amber-50">
+                    {getCompanyDisplayName(company)}: {model.name}
+                  </h2>
+                  {getPricingDisplay(model) && (
+                    <span className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-bold rounded-lg shadow-md">
+                      {getPricingDisplay(model)}
+                    </span>
+                  )}
+                  {model.context_length > 100000 && (
+                    <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-bold rounded-lg shadow-md">
+                      NEW
+                    </span>
+                  )}
+                </div>
+                <p className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                  {model.description?.split('.')[0] || "Lightning-fast with surprising capability"}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-amber-200 dark:hover:bg-amber-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-amber-900 dark:text-amber-200" />
+              </button>
+            </div>
+          </div>
+
+          {/* Content - Custom Scrollbar */}
+          <div className="p-6 overflow-y-auto modern-scrollbar" style={{ maxHeight: 'calc(90vh - 180px)' }}>
+            {/* Description */}
+            <div className="mb-6 bg-white/50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+              <h3 className="text-base font-bold text-amber-950 dark:text-amber-50 mb-2">
+                Description
+              </h3>
+              <p className="text-amber-800 dark:text-amber-200 text-sm leading-relaxed">
+                {model.description || `The fastest model in ${getCompanyDisplayName(company)}'s family, but don't confuse speed with simplicity. It handles complex tasks remarkably well while maintaining low latency. Perfect for real-time applications and rapid prototyping.`}
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="mb-6">
+              <h3 className="text-base font-bold text-amber-950 dark:text-amber-50 mb-3">
+                Features
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`px-4 py-2.5 ${feature.color} rounded-xl flex items-center gap-2 shadow-lg`}
+                  >
+                    <feature.icon className="w-4 h-4 text-white" />
+                    <span className="text-white text-sm font-bold">{feature.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white/50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                <h3 className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">
+                  Provider
+                </h3>
+                <p className="text-amber-950 dark:text-amber-50 text-sm font-semibold">
+                  {getCompanyDisplayName(company)}
+                </p>
+              </div>
+              <div className="bg-white/50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                <h3 className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">
+                  Developer
+                </h3>
+                <p className="text-amber-950 dark:text-amber-50 text-sm font-semibold">
+                  {getCompanyDisplayName(company)}
+                </p>
+              </div>
+              <div className="bg-white/50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                <h3 className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">
+                  Context Length
+                </h3>
+                <p className="text-amber-950 dark:text-amber-50 text-sm font-semibold">
+                  {model.context_length ? `${(model.context_length / 1000).toFixed(0)}K tokens` : "N/A"}
+                </p>
+              </div>
+              <div className="bg-white/50 dark:bg-amber-950/50 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                <h3 className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">
+                  Added On
+                </h3>
+                <p className="text-amber-950 dark:text-amber-50 text-sm font-semibold">
+                  {new Date().toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Benchmark Performance */}
+            <div>
+              <h3 className="text-base font-bold text-amber-950 dark:text-amber-50 mb-1 flex items-center gap-2">
+                Benchmark Performance
+              </h3>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-4">
+                via Artificial Analysis ↗
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { label: "Quality", value: 35, icon: "🎯", color: "from-blue-500 to-cyan-500" },
+                  { label: "Speed", value: 38, icon: "⚡", color: "from-purple-500 to-pink-500" },
+                  { label: "Cost", value: 56, icon: "💰", color: "from-rose-500 to-orange-500" },
+                ].map((metric, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white/60 dark:bg-amber-950/60 rounded-xl p-4 border-2 border-amber-200 dark:border-amber-700"
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="relative w-24 h-24 mb-3">
+                        <svg className="transform -rotate-90 w-24 h-24">
+                          <circle
+                            cx="48"
+                            cy="48"
+                            r="40"
+                            stroke="currentColor"
+                            strokeWidth="8"
+                            fill="none"
+                            className="text-amber-200 dark:text-amber-800"
+                          />
+                          <circle
+                            cx="48"
+                            cy="48"
+                            r="40"
+                            stroke="url(#gradient-${index})"
+                            strokeWidth="8"
+                            fill="none"
+                            strokeDasharray={`${2 * Math.PI * 40}`}
+                            strokeDashoffset={`${2 * Math.PI * 40 * (1 - metric.value / 100)}`}
+                            className="transition-all duration-1000 ease-out"
+                            strokeLinecap="round"
+                          />
+                          <defs>
+                            <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" className="text-amber-500" stopColor="currentColor" />
+                              <stop offset="100%" className="text-orange-600" stopColor="currentColor" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl mb-1">{metric.icon}</span>
+                          <span className={`text-2xl font-bold bg-gradient-to-r ${metric.color} bg-clip-text text-transparent`}>
+                            {metric.value}%
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-center text-sm font-bold text-amber-900 dark:text-amber-100">
+                        {metric.label}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -145,7 +361,6 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
         onClick={onClose}
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
       >
-        {/* Modal */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -188,7 +403,6 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
               </div>
             </div>
 
-            {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-amber-600 dark:text-amber-400 pointer-events-none" />
               <input
@@ -202,10 +416,8 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
             </div>
           </div>
 
-          {/* Two Column Layout */}
           <div className="flex" style={{ height: '400px' }}>
-            {/* Left Sidebar - Companies */}
-            <div className="w-36 border-r-2 border-amber-200 dark:border-amber-700 bg-white/30 dark:bg-amber-950/30 overflow-y-auto custom-scrollbar">
+            <div className="w-36 border-r-2 border-amber-200 dark:border-amber-700 bg-white/30 dark:bg-amber-950/30 overflow-y-auto modern-scrollbar">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="w-6 h-6 border-3 border-amber-600 border-t-transparent rounded-full animate-spin" />
@@ -245,15 +457,13 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
               )}
             </div>
 
-            {/* Right Panel - Models */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar bg-white/20 dark:bg-amber-950/20">
+            <div className="flex-1 overflow-y-auto modern-scrollbar bg-white/20 dark:bg-amber-950/20">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="w-8 h-8 border-3 border-amber-600 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : selectedCompany ? (
                 <div className="p-4">
-                  {/* Company Header */}
                   <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-amber-200 dark:border-amber-700">
                     <CompanyIconDisplay company={selectedCompany} size="large" />
                     <div>
@@ -266,7 +476,6 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
                     </div>
                   </div>
 
-                  {/* Models List */}
                   <div className="space-y-1.5">
                     {filteredModels.length > 0 ? (
                       filteredModels.map((model) => (
@@ -278,7 +487,6 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
                           }}
                           className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 transform group border-2 border-transparent hover:border-amber-300 dark:hover:border-amber-600 bg-white/40 dark:bg-amber-900/40 hover:bg-amber-100/60 dark:hover:bg-amber-800/60 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
                         >
-                          {/* Star Icon */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -295,7 +503,6 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
                             />
                           </button>
 
-                          {/* Model Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="text-amber-950 dark:text-amber-50 font-bold text-sm truncate">
@@ -322,7 +529,6 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
                             </p>
                           </div>
 
-                          {/* Right Icons */}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <button
                               onClick={(e) => e.stopPropagation()}
@@ -331,7 +537,10 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
                               <Eye className="w-4 h-4 text-amber-700 dark:text-amber-300" />
                             </button>
                             <button
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInfoModel(model);
+                              }}
                               className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-700 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-90"
                             >
                               <Info className="w-4 h-4 text-amber-700 dark:text-amber-300" />
@@ -356,20 +565,39 @@ const ModelSelector = ({ isOpen, onClose, selectedModel, onSelectModel }) => {
         </motion.div>
       </motion.div>
 
+      <AnimatePresence>
+        {infoModel && (
+          <ModelInfoDialog
+            model={infoModel}
+            onClose={() => setInfoModel(null)}
+          />
+        )}
+      </AnimatePresence>
+
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
+        .modern-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
+        .modern-scrollbar::-webkit-scrollbar-track {
           background: rgba(251, 191, 36, 0.1);
           border-radius: 10px;
+          margin: 4px;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, rgba(217, 119, 6, 0.6) 0%, rgba(180, 83, 9, 0.6) 100%);
+        .modern-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, rgba(251, 146, 60, 0.8) 0%, rgba(234, 88, 12, 0.8) 100%);
           border-radius: 10px;
+          border: 2px solid rgba(251, 191, 36, 0.1);
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, rgba(217, 119, 6, 0.8) 0%, rgba(180, 83, 9, 0.8) 100%);
+        .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, rgba(251, 146, 60, 1) 0%, rgba(234, 88, 12, 1) 100%);
+        }
+        .modern-scrollbar::-webkit-scrollbar-corner {
+          background: transparent;
+        }
+        .modern-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(251, 146, 60, 0.8) rgba(251, 191, 36, 0.1);
         }
       `}</style>
     </AnimatePresence>

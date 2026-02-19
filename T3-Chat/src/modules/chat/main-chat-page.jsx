@@ -28,8 +28,8 @@ const MainChatPage = () => {
   const [message, setMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedModel, setSelectedModel] = useState({
-    id: "anthropic/claude-sonnet-4-5-20250929",
-    name: "Claude Sonnet 4.5"
+  id: null,
+  name: "Select Model"
   });
   
   // Reference for model selector button
