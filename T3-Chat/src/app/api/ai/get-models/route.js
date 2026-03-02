@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 
+const ALLOWED_COMPANIES = ["openai", "google", "anthropic", "meta-llama", "x-ai", "deepseek"];
+
 export async function GET() {
   try {
     const response = await fetch("https://openrouter.ai/api/v1/models", {
       headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
         "X-Title": "CodaAI Chat",
       },
+      next: { revalidate: 3600 }, // cache for 1 hour
     });
 
     if (!response.ok) {
@@ -15,8 +18,7 @@ export async function GET() {
     }
 
     const data = await response.json();
-    
-    // Transform and filter the models for better UI display
+
     const transformedModels = data.data.map((model) => ({
       id: model.id,
       name: model.name || model.id.split("/")[1] || model.id,
@@ -29,26 +31,28 @@ export async function GET() {
       top_provider: model.top_provider || {},
     }));
 
-    // Sort models by popularity/pricing
-    const sortedModels = transformedModels.sort((a, b) => {
+    // Filter to only the 6 allowed companies
+    const filteredModels = transformedModels.filter((model) => {
+      const company = model.id.split("/")[0]?.toLowerCase();
+      return ALLOWED_COMPANIES.includes(company);
+    });
+
+    // Sort: free first, then ascending by price
+    const sortedModels = filteredModels.sort((a, b) => {
       const aPrice = parseFloat(a.pricing.prompt || "0");
       const bPrice = parseFloat(b.pricing.prompt || "0");
       return aPrice - bPrice;
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       models: sortedModels,
-      count: sortedModels.length 
+      count: sortedModels.length,
     });
   } catch (error) {
     console.error("Error fetching models:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message,
-        models: [] 
-      },
+      { success: false, error: error.message, models: [] },
       { status: 500 }
     );
   }

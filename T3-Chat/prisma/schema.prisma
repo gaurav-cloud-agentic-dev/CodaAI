@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,20 +13,21 @@ datasource db {
 model Test {
   id   String @id @default(uuid())
   name String
-
   desc String
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String         @id @default(uuid())
   name          String
   email         String
-  emailVerified Boolean   @default(false)  // ← Back to Boolean
+  emailVerified Boolean        @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   sessions      Session[]
   accounts      Account[]
+  conversations Conversation[]
+  messages      Message[]
 
   @@unique([email])
   @@map("user")
@@ -81,4 +79,62 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// Chat/Conversation Model
+model Conversation {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  modelId       String?
+  modelName     String?
+  isPinned      Boolean   @default(false)
+  isShared      Boolean   @default(false)
+  shareId       String?   @unique
+  isArchived    Boolean   @default(false)  // ADD THIS LINE
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastMessageAt DateTime  @default(now())
+  
+  messages      Message[]
+  
+  @@index([userId, lastMessageAt(sort: Desc)])
+  @@index([shareId])
+  @@map("conversation")
+}
+
+// Message Model
+model Message {
+  id             String      @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String      @db.Text
+  thinking       String?     @db.Text    // ← ADD THIS LINE
+  messageType    MessageType @default(normal)
+  tokens         Int?
+  errorDetails   String?     @db.Text
+  toolCallData   Json?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([conversationId])
+  @@index([userId])
+  @@index([conversationId, createdAt])
+  @@map("message")
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+enum MessageType {
+  normal
+  error
+  tool_call
 }

@@ -1,28 +1,30 @@
-import { currentUser } from "@/modules/authentication/actions";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import SideBar from "@/modules/chat/side-bar";
 import MainChatPage from "@/modules/chat/main-chat-page";
+import ChatViewWrapper from "@/modules/chat/chat-view-wrapper";
 
 export default async function Home() {
-  const user = await currentUser();
-  console.log("=== HOME PAGE ===");
-  console.log("User:", user);
-  console.log("emailVerified:", user?.emailVerified);
-  
-  // This should be caught by middleware, but just in case
-  if (!user) {
-    console.log("No user found on home page!");
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/sign-in");
   }
-  if (user && !user.emailVerified) {
-    console.log("⚠️ WARNING: Unverified user reached home page!");
+
+  if (!session.user.emailVerified) {
+    redirect("/verify-email");
   }
-  
+
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
       <SideBar />
-      
-      {/* Main Chat Page */}
-      <MainChatPage />
+      <div className="flex-1 relative">
+        <MainChatPage />
+        <ChatViewWrapper />
+      </div>
     </div>
   );
 }
