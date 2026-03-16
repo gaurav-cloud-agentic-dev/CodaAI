@@ -11,9 +11,12 @@ import {
 } from "../actions";
 import { toast } from "sonner";
 import { useChatStore } from "../store/chat-store";
+import { useRouter } from "next/navigation";
 
 /**
- * Hook to initialize a new chat
+ * Hook to initialize a new chat.
+ * NOTE: Does NOT call /api/chat itself — that is done by ChatView
+ * after it mounts, using the pendingMessage stored in useChatStore.
  */
 export function useInitializeChat() {
   const queryClient = useQueryClient();
@@ -27,7 +30,6 @@ export function useInitializeChat() {
       if (data.success && data.conversationId) {
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
         setActiveChatId(data.conversationId);
-        toast.success("Chat started!");
       } else if (data.exceedsLimit) {
         toast.error("Message exceeds 600 line limit");
       } else {
@@ -113,21 +115,24 @@ export function useConversationMessages(conversationId) {
 
 /**
  * Hook to delete a conversation
+ * FIXED: always clears active chat and redirects home after deletion
  */
 export function useDeleteConversation() {
   const queryClient = useQueryClient();
-  const { activeChatId, setActiveChatId } = useChatStore();
+  const { clearActiveChatId } = useChatStore();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: async (conversationId) => {
       return await deleteConversation(conversationId);
     },
-    onSuccess: (data, conversationId) => {
+    onSuccess: (data) => {
       if (data.success) {
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
-        if (activeChatId === conversationId) {
-          setActiveChatId(null);
-        }
+        // Always clear and go home — SideBar's confirmDelete handles the
+        // primary redirect, this is a safety net
+        clearActiveChatId();
+        router.push("/");
         toast.success("Chat deleted");
       } else {
         toast.error(data.error || "Failed to delete chat");

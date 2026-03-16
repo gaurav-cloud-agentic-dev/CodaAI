@@ -9,14 +9,18 @@ export const useChatStore = create(
       // Streaming state
       isStreaming: false,
       streamingContent: "",
-      streamingThinking: "",       // CoT / reasoning text
+      streamingThinking: "",
       streamingConversationId: null,
+
+      // Pending message — set before chat is created, read by ChatView on mount
+      pendingMessage: null,
+      pendingModelId: null,
+      pendingModelName: null,
 
       setActiveChatId: (chatId) => set({ activeChatId: chatId }),
       clearActiveChatId: () => set({ activeChatId: null }),
       getActiveChatId: () => get().activeChatId,
 
-      // Start a new streaming session — reset all streaming state
       setStreaming: (conversationId) =>
         set({
           isStreaming: true,
@@ -25,15 +29,12 @@ export const useChatStore = create(
           streamingConversationId: conversationId,
         }),
 
-      // Append a chunk to the visible response
       appendStreamingContent: (chunk) =>
         set((state) => ({ streamingContent: state.streamingContent + chunk })),
 
-      // Append a chunk to the reasoning / CoT block
       appendStreamingThinking: (chunk) =>
         set((state) => ({ streamingThinking: state.streamingThinking + chunk })),
 
-      // Reset everything when done
       stopStreaming: () =>
         set({
           isStreaming: false,
@@ -41,10 +42,26 @@ export const useChatStore = create(
           streamingThinking: "",
           streamingConversationId: null,
         }),
+
+      // Store the first message + model before the conversation is created
+      setPendingMessage: (message, modelId, modelName) =>
+        set({
+          pendingMessage: message,
+          pendingModelId: modelId,
+          pendingModelName: modelName,
+        }),
+
+      // Clear after ChatView fires it — prevents re-firing on re-renders
+      clearPendingMessage: () =>
+        set({
+          pendingMessage: null,
+          pendingModelId: null,
+          pendingModelName: null,
+        }),
     }),
     {
       name: "chat-storage",
-      partialize: () => ({}), // Nothing persisted — streaming state is ephemeral
+      partialize: () => ({}), // Nothing persisted — all state is ephemeral
     }
   )
 );
