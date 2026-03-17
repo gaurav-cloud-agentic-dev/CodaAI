@@ -311,28 +311,45 @@ const SideBar = () => {
             borderBottom: "1px solid rgba(0,0,0,0.06)",
             flexShrink: 0,
           }}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {isOpen ? (
-                <motion.h1
+                <motion.button
                   key="logo-text"
-                  initial={{ opacity: 0, x: -8 }}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -8 }}
                   transition={ease}
-                  style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "rgba(0,0,0,0.88)", letterSpacing: "-0.02em" }}
+                  onClick={() => { clearActiveChatId(); router.push("/"); }}
+                  style={{
+                    margin: 0, fontSize: 18, fontWeight: 700,
+                    color: "rgba(0,0,0,0.88)", letterSpacing: "-0.02em",
+                    background: "none", border: "none", cursor: "pointer",
+                    padding: 0, fontFamily: "'Inter', sans-serif",
+                    transition: "opacity 0.14s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = "0.65"}
+                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}
                 >
                   CodaAI
-                </motion.h1>
+                </motion.button>
               ) : (
-                <motion.div
+                <motion.button
                   key="logo-icon"
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={false}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={ease}
+                  onClick={() => { clearActiveChatId(); router.push("/"); }}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer", padding: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "opacity 0.14s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = "0.65"}
+                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}
                 >
                   <Sparkles style={{ width: 20, height: 20, color: "rgba(0,0,0,0.55)" }} />
-                </motion.div>
+                </motion.button>
               )}
             </AnimatePresence>
           </div>
@@ -345,7 +362,7 @@ const SideBar = () => {
                 onClick={item.action}
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
-                initial={{ opacity: 0, x: -10 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ ...ease, delay: index * 0.05 }}
                 style={{
@@ -410,7 +427,7 @@ const SideBar = () => {
           <AnimatePresence>
             {isOpen && (
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={false}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18 }}
@@ -461,7 +478,7 @@ const SideBar = () => {
           <AnimatePresence>
             {!isOpen && (
               <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                initial={false} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.18 }}
                 style={{
                   flex: 1, display: "flex", flexDirection: "column",
@@ -535,10 +552,10 @@ const SideBar = () => {
               }}>
                 GS
               </div>
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {isOpen && (
                   <motion.div
-                    initial={{ opacity: 0, width: 0 }}
+                    initial={false}
                     animate={{ opacity: 1, width: "auto" }}
                     exit={{ opacity: 0, width: 0 }}
                     transition={ease}
@@ -561,6 +578,7 @@ const SideBar = () => {
       {/* ── Toggle Button ── */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
+        initial={false}
         animate={{ left: isOpen ? 268 : 56 }}
         transition={{ type: "tween", ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
         whileHover={{ scale: 1.12 }}

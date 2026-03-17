@@ -5,6 +5,8 @@ import { X, Copy, Check, Share2, Link, Globe } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+const ease = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.2 };
+
 export default function ShareModal({ isOpen, onClose, shareUrl, onShare, onUnshare, isShared }) {
   const [copied, setCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -41,135 +43,243 @@ export default function ShareModal({ isOpen, onClose, shareUrl, onShare, onUnsha
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
+            style={{
+              position: "fixed", inset: 0, zIndex: 50,
+              background: "rgba(0,0,0,0.22)",
+              backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+            }}
           />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-amber-900 rounded-2xl shadow-2xl border border-amber-200 dark:border-amber-700 z-50 overflow-hidden"
-          >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-amber-200/50 dark:border-amber-700/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 dark:bg-amber-800 rounded-lg">
-                  <Share2 className="w-5 h-5 text-amber-800 dark:text-amber-300" />
+          {/* Centering wrapper */}
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 51,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 16, pointerEvents: "none",
+          }}>
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={ease}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%", maxWidth: 440,
+                pointerEvents: "auto",
+                borderRadius: 22, overflow: "hidden",
+                background: "rgba(255,255,255,0.88)",
+                backdropFilter: "blur(48px)", WebkitBackdropFilter: "blur(48px)",
+                border: "1px solid rgba(255,255,255,0.95)",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
+                fontFamily: "'Inter', -apple-system, sans-serif",
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "20px 24px 16px",
+                borderBottom: "1px solid rgba(0,0,0,0.07)",
+                background: "rgba(255,255,255,0.55)",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: "rgba(59,158,255,0.10)",
+                    border: "1px solid rgba(59,158,255,0.18)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Share2 style={{ width: 17, height: 17, color: "#3B9EFF" }} />
+                  </div>
+                  <h3 style={{
+                    margin: 0, fontSize: 17, fontWeight: 700,
+                    color: "rgba(0,0,0,0.82)", letterSpacing: "-0.01em",
+                  }}>
+                    Share Conversation
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-amber-950 dark:text-amber-100">
-                  Share Conversation
-                </h3>
+                <button
+                  onClick={onClose}
+                  style={{
+                    width: 32, height: 32, borderRadius: 9, cursor: "pointer",
+                    background: "rgba(255,255,255,0.65)",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.14s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
+                >
+                  <X style={{ width: 15, height: 15, color: "rgba(0,0,0,0.50)" }} />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-amber-800 dark:text-amber-300" />
-              </button>
-            </div>
 
-            {/* Content */}
-            <div className="p-6">
-              {!isShared ? (
-                // Before sharing
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/50 rounded-xl">
-                    <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-amber-950 dark:text-amber-100 mb-1">
-                        Share this conversation
-                      </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-400">
-                        Anyone with the link will be able to view this conversation. Your name will be visible.
-                      </p>
+              {/* Content */}
+              <div style={{ padding: "20px 24px 24px" }}>
+                {!isShared ? (
+                  // ── Before sharing ──
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div style={{
+                      display: "flex", alignItems: "flex-start", gap: 12,
+                      padding: "14px 16px", borderRadius: 14,
+                      background: "rgba(255,255,255,0.55)",
+                      border: "1px solid rgba(255,255,255,0.82)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+                    }}>
+                      <Globe style={{ width: 18, height: 18, color: "rgba(0,0,0,0.45)", flexShrink: 0, marginTop: 1 }} />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.72)" }}>
+                          Share this conversation
+                        </p>
+                        <p style={{ margin: 0, fontSize: 12, color: "rgba(0,0,0,0.42)", lineHeight: 1.55 }}>
+                          Anyone with the link will be able to view this conversation. Your name will be visible.
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <motion.button
-                    onClick={handleShare}
-                    disabled={isSharing}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSharing ? (
-                      <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                        />
-                        Generating link...
-                      </>
-                    ) : (
-                      <>
-                        <Link className="w-5 h-5" />
-                        Create Share Link
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              ) : (
-                // After sharing
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                    <Check className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
-                        Link created successfully!
-                      </p>
-                      <p className="text-xs text-green-700 dark:text-green-400">
-                        Share this link with anyone to let them view your conversation.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Share URL */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={shareUrl}
-                      readOnly
-                      className="w-full px-4 py-3 pr-12 bg-amber-50 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 rounded-xl text-sm text-amber-900 dark:text-amber-100 outline-none"
-                    />
                     <button
-                      onClick={handleCopy}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg transition-colors"
+                      onClick={handleShare}
+                      disabled={isSharing}
+                      style={{
+                        width: "100%", padding: "12px 0", borderRadius: 12, border: "none",
+                        cursor: isSharing ? "not-allowed" : "pointer",
+                        background: isSharing
+                          ? "rgba(0,0,0,0.07)"
+                          : "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)",
+                        color: isSharing ? "rgba(0,0,0,0.35)" : "#fff",
+                        fontSize: 13, fontWeight: 600,
+                        fontFamily: "'Inter', sans-serif",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                        opacity: isSharing ? 0.6 : 1,
+                        boxShadow: isSharing ? "none" : "0 6px 22px rgba(59,158,255,0.40), inset 0 1px 0 rgba(255,255,255,0.28)",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={e => { if (!isSharing) e.currentTarget.style.boxShadow = "0 8px 28px rgba(59,158,255,0.52), inset 0 1px 0 rgba(255,255,255,0.28)"; }}
+                      onMouseLeave={e => { if (!isSharing) e.currentTarget.style.boxShadow = "0 6px 22px rgba(59,158,255,0.40), inset 0 1px 0 rgba(255,255,255,0.28)"; }}
                     >
-                      {copied ? (
-                        <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      {isSharing ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            style={{
+                              width: 16, height: 16,
+                              border: "2px solid rgba(0,0,0,0.15)",
+                              borderTopColor: "rgba(0,0,0,0.45)",
+                              borderRadius: "50%",
+                            }}
+                          />
+                          Generating link...
+                        </>
                       ) : (
-                        <Copy className="w-5 h-5 text-amber-800 dark:text-amber-300" />
+                        <>
+                          <Link style={{ width: 16, height: 16 }} />
+                          Create Share Link
+                        </>
                       )}
                     </button>
                   </div>
+                ) : (
+                  // ── After sharing ──
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div style={{
+                      display: "flex", alignItems: "flex-start", gap: 12,
+                      padding: "14px 16px", borderRadius: 14,
+                      background: "rgba(34,197,94,0.07)",
+                      border: "1px solid rgba(34,197,94,0.20)",
+                    }}>
+                      <div style={{
+                        width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                        background: "rgba(34,197,94,0.12)",
+                        display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1,
+                      }}>
+                        <Check style={{ width: 12, height: 12, color: "#16A34A" }} strokeWidth={2.5} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.72)" }}>
+                          Link created successfully!
+                        </p>
+                        <p style={{ margin: 0, fontSize: 12, color: "rgba(0,0,0,0.42)", lineHeight: 1.55 }}>
+                          Share this link with anyone to let them view your conversation.
+                        </p>
+                      </div>
+                    </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <motion.button
-                      onClick={handleCopy}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Copy className="w-4 h-4" />
-                      Copy Link
-                    </motion.button>
-                    <motion.button
-                      onClick={handleUnshare}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-4 py-2.5 bg-amber-100 dark:bg-amber-800 hover:bg-amber-200 dark:hover:bg-amber-700 text-amber-900 dark:text-amber-100 font-medium rounded-xl transition-colors"
-                    >
-                      Unshare
-                    </motion.button>
+                    {/* Share URL */}
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        value={shareUrl}
+                        readOnly
+                        style={{
+                          width: "100%", padding: "11px 48px 11px 14px",
+                          borderRadius: 12, boxSizing: "border-box",
+                          background: "rgba(255,255,255,0.60)",
+                          border: "1px solid rgba(0,0,0,0.09)",
+                          fontSize: 12.5, color: "rgba(0,0,0,0.65)",
+                          fontFamily: "'Inter', sans-serif", outline: "none",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}
+                      />
+                      <button
+                        onClick={handleCopy}
+                        style={{
+                          position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                          width: 28, height: 28, borderRadius: 8, border: "none", cursor: "pointer",
+                          background: "rgba(255,255,255,0.72)",
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "background 0.14s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.95)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.72)"}
+                      >
+                        {copied
+                          ? <Check style={{ width: 13, height: 13, color: "#16A34A" }} strokeWidth={2.5} />
+                          : <Copy style={{ width: 13, height: 13, color: "rgba(0,0,0,0.50)" }} />
+                        }
+                      </button>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <button
+                        onClick={handleCopy}
+                        style={{
+                          flex: 1, padding: "10px 0", borderRadius: 11, border: "none", cursor: "pointer",
+                          background: "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)",
+                          color: "#fff", fontSize: 13, fontWeight: 600,
+                          fontFamily: "'Inter', sans-serif",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                          boxShadow: "0 6px 22px rgba(59,158,255,0.40), inset 0 1px 0 rgba(255,255,255,0.28)",
+                          transition: "box-shadow 0.14s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.boxShadow = "0 8px 28px rgba(59,158,255,0.52), inset 0 1px 0 rgba(255,255,255,0.28)"}
+                        onMouseLeave={e => e.currentTarget.style.boxShadow = "0 6px 22px rgba(59,158,255,0.40), inset 0 1px 0 rgba(255,255,255,0.28)"}
+                      >
+                        <Copy style={{ width: 14, height: 14 }} />
+                        Copy Link
+                      </button>
+                      <button
+                        onClick={handleUnshare}
+                        style={{
+                          padding: "10px 18px", borderRadius: 11, border: "none", cursor: "pointer",
+                          background: "rgba(255,255,255,0.65)",
+                          border: "1px solid rgba(0,0,0,0.09)",
+                          fontSize: 13, fontWeight: 500, color: "rgba(0,0,0,0.65)",
+                          fontFamily: "'Inter', sans-serif",
+                          transition: "background 0.14s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
+                      >
+                        Unshare
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

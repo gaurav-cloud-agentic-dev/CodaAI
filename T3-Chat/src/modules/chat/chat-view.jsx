@@ -18,7 +18,7 @@ import ShareModal from "../components/share-modal";
 import { shareConversation, unshareConversation } from "./actions/share";
 import { useLanguage } from "./LanguageSettings";
 import { UserMessage, MessageSectionRefresh } from "./chat-form";
-import { MarkdownRenderer } from "../components/MarkdownRenderer"; // adjust path if needed
+import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
 const classyEase = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.38 };
 const classyFast = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.22 };
@@ -61,7 +61,7 @@ function ThinkingBlock({ thinking, isStreaming = false }) {
           transition: "color 0.15s",
         }}
         onMouseEnter={e => e.currentTarget.style.color = "rgba(0,0,0,0.70)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+        onMouseLeave={e => e.currentTarget.style.color = "rgba(0,0,0,0.45)"}
       >
         <Brain style={{ width: 13, height: 13 }} />
         <span>{isStreaming ? "Thinking..." : "Thought process"}</span>
@@ -157,8 +157,23 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   const scrollToBottom = useCallback(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    el.scrollTop = el.scrollHeight;
   }, []);
+
+  const snapToBottom = useCallback(() => {
+    isAtBottomRef.current = true;
+    setShowScrollBtn(false);
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
+  // Reset scroll when switching chats
+  useEffect(() => {
+    isAtBottomRef.current = true;
+    setShowScrollBtn(false);
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = 0;
+  }, [initialChatId]);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
@@ -172,14 +187,25 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     return () => el.removeEventListener("scroll", onScroll);
   }, [checkIfAtBottom]);
 
-  useEffect(() => { if (isAtBottomRef.current) scrollToBottom(); }, [streamingContent, streamingThinking]); // eslint-disable-line
-  useEffect(() => { if (isAtBottomRef.current) scrollToBottom(); }, [allMessages.length]); // eslint-disable-line
+  useEffect(() => {
+    if (isAtBottomRef.current) scrollToBottom();
+  }, [streamingContent, streamingThinking]); // eslint-disable-line
 
-  const snapToBottom = useCallback(() => {
-    isAtBottomRef.current = true;
-    setShowScrollBtn(false);
-    const el = messagesContainerRef.current; if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
-  }, []);
+  useEffect(() => {
+    if (isAtBottomRef.current) scrollToBottom();
+  }, [allMessages.length]); // eslint-disable-line
+
+  // Scroll to bottom after messages load — use rAF to wait for paint
+  useEffect(() => {
+    if (!loadingMessages && allMessages.length > 0) {
+      const el = messagesContainerRef.current;
+      if (!el) return;
+      const raf = requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [loadingMessages, initialChatId]); // eslint-disable-line
 
   useEffect(() => { if (initialChatId) setActiveChatId(initialChatId); }, [initialChatId, setActiveChatId]);
 
@@ -385,12 +411,11 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         position: "relative",
         fontFamily: "'Inter', -apple-system, sans-serif",
         WebkitFontSmoothing: "antialiased",
+        background: "#EBEBEB", // prevent flash
       }}
     >
       <style>{`
         html, body, #__next { height: 100%; overflow: hidden !important; }
-
-        /* ── Same 3-layer bg as main page ── */
         .cv-bg-a { position:absolute; inset:0; z-index:0; background:#EBEBEB; }
         .cv-bg-b { position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; }
         .cv-bg-c {
@@ -398,17 +423,15 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
           background:rgba(255,255,255,0.62);
           backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px);
         }
-
         .cv-scroll::-webkit-scrollbar { width: 4px; }
         .cv-scroll::-webkit-scrollbar-track { background: transparent; }
         .cv-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.45); border-radius: 99px; }
         .cv-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.65); }
         .cv-scroll { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.45) transparent; }
-
         .cv-input-wrap:focus-within {
-         box-shadow: 0 0 0 2px rgba(59,158,255,0.22), 0 0 0 6px rgba(59,158,255,0.06), 0 20px 56px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
-         border-color: rgba(59,158,255,0.35) !important;
-      }
+          box-shadow: 0 0 0 2px rgba(59,158,255,0.22), 0 0 0 6px rgba(59,158,255,0.06), 0 20px 56px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
+          border-color: rgba(59,158,255,0.35) !important;
+        }
         .cv-input-wrap textarea::placeholder { color: rgba(0,0,0,0.32); }
       `}</style>
 
@@ -422,9 +445,8 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
       </div>
       <div className="cv-bg-c" aria-hidden="true" />
 
-      {/* ── Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={classyEase}
+      {/* ── Header — plain div, no motion to prevent re-animation ── */}
+      <div
         style={{
           flexShrink: 0, zIndex: 20, position: "relative",
           padding: "14px 24px",
@@ -485,7 +507,17 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
           {/* Share button */}
           <motion.button
             whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            onClick={() => setIsShareModalOpen(true)}
+            onClick={async () => {
+              setIsShareModalOpen(true);
+              if (!isConversationShared && !conversationData?.conversation?.shareId) {
+                await handleShare(); // ← only generate if no shareId exists in DB at all
+              } else if (!isConversationShared && conversationData?.conversation?.shareId) {
+              // Already has a shareId in DB, just restore the URL and mark as shared
+              const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+              setShareUrl(`${base}/share/${conversationData.conversation.shareId}`);
+              setIsConversationShared(true);
+              }
+            }}
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "8px 14px", borderRadius: 11, border: "none", cursor: "pointer",
@@ -504,7 +536,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
             {t.share}
           </motion.button>
         </div>
-      </motion.div>
+      </div>
 
       {/* ── Messages + Floating Input ── */}
       <div style={{ position: "relative", flex: 1, minHeight: 0, zIndex: 10 }}>
@@ -517,6 +549,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                   <motion.div
+                    initial={false}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
                     style={{
@@ -532,21 +565,16 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                 </div>
               </div>
             ) : allMessages.length === 0 && !isThisStreaming ? (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={classyEase}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}
-              >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
                 <p style={{ fontSize: 13.5, color: "rgba(0,0,0,0.32)", fontFamily: "'Inter', sans-serif" }}>
                   {t.noChatsYet}
                 </p>
-              </motion.div>
+              </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {allMessages.map((msg, index) => (
-                  <motion.div
+                  <div
                     key={msg.id || `msg-${index}`}
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "tween", ease: [0.22, 1, 0.36, 1], duration: 0.28 }}
                     style={{
                       display: "flex", alignItems: "flex-end", gap: 8, width: "100%",
                       flexDirection: msg.role === "user" ? "row-reverse" : "row",
@@ -579,7 +607,6 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                         isRefreshing={refreshingMessageId === msg.id}
                       />
                     ) : (
-                      /* Assistant message */
                       <div style={{
                         display: "flex", flexDirection: "column",
                         minWidth: 0, flex: 1, alignItems: "flex-start",
@@ -608,7 +635,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                         )}
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 ))}
 
                 {/* Streaming assistant bubble */}
@@ -694,11 +721,8 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
           )}
         </AnimatePresence>
 
-        {/* ── Floating Input ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={classyEase}
-          style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}
-        >
+        {/* ── Floating Input — plain div, no motion ── */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}>
           {/* Gradient fade */}
           <div style={{
             position: "absolute", insetInline: 0, top: -96, bottom: 0,
@@ -830,11 +854,22 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                       transition: "all 0.16s cubic-bezier(.34,1.56,.64,1)",
                       flexShrink: 0,
                     }}
-                    onMouseEnter={e => { if (input.trim() && !isThisStreaming) { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(59,158,255,0.55)"; } }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = input.trim() && !isThisStreaming ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)" : "none"; }}
+                    onMouseEnter={e => {
+                      if (input.trim() && !isThisStreaming) {
+                        e.currentTarget.style.transform = "scale(1.08)";
+                        e.currentTarget.style.boxShadow = "0 10px 30px rgba(59,158,255,0.55)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.boxShadow = input.trim() && !isThisStreaming
+                        ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)"
+                        : "none";
+                    }}
                   >
                     {isThisStreaming ? (
                       <motion.div
+                        initial={false}
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         style={{
@@ -860,7 +895,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
               {t.disclaimer}
             </p>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       <ModelSelector isOpen={isModelSelectorOpen} onClose={() => setIsModelSelectorOpen(false)}

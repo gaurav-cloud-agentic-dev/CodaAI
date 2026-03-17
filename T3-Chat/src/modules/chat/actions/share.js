@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function shareConversation(conversationId) {
   try {
@@ -54,7 +55,7 @@ export async function shareConversation(conversationId) {
       shareId,
     };
   } catch (error) {
-    console.error("Error sharing conversation:", error);
+    console.error("❌ Error sharing conversation:", error);
     return { success: false, error: "Failed to share conversation" };
   }
 }
@@ -93,6 +94,13 @@ export async function unshareConversation(conversationId) {
 }
 
 export async function getSharedConversation(shareId) {
+  noStore();
+
+  // Guard: prevent Prisma from querying without a valid shareId
+  if (!shareId) {
+    return { success: false, error: "No shareId provided" };
+  }
+
   try {
     const conversation = await prisma.conversation.findFirst({
       where: {
@@ -126,7 +134,7 @@ export async function getSharedConversation(shareId) {
       },
     };
   } catch (error) {
-    console.error("Error fetching shared conversation:", error);
+    console.error("❌ Error fetching shared conversation:", error);
     return { success: false, error: "Failed to fetch shared conversation" };
   }
 }
