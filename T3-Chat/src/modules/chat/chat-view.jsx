@@ -3,8 +3,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
-  Bot, User, Send, Mic, Plus, ChevronDown, ArrowDown,
-  AlertCircle, Share2, Brain, LayoutGrid,
+  Bot, User, Mic, ChevronDown, ArrowDown,
+  AlertCircle, Brain,
 } from "lucide-react";
 import { useChatStore } from "./store/chat-store";
 import { useConversationMessages } from "./hooks/chat";
@@ -12,16 +12,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import ModelSelector from "./model-selector";
-import CompareView from "./compare-view";
 import ModelRacePopup from "./model-race-popup";
-import ShareModal from "../components/share-modal";
-import { shareConversation, unshareConversation } from "./actions/share";
 import { useLanguage } from "./LanguageSettings";
 import { UserMessage, MessageSectionRefresh } from "./chat-form";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
+import StopButton from "./stop-button";
+import FileUploadManager, { FilePreviewStrip, useFileUpload } from "./file-upload-manager";
+import { useInputIntelligence, GhostSuggestion, CorrectionsBar, TabHint } from "./input-intelligence";
 
 const classyEase = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.38 };
 const classyFast = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.22 };
+
 
 function decodeB64(b64) {
   try { return Buffer.from(b64, "base64").toString("utf8"); }
@@ -35,12 +36,9 @@ function BlinkingCursor({ thin = false }) {
       transition={{ duration: 0.8, repeat: Infinity, ease: "linear", times: [0, 0.45, 0.5, 1] }}
       style={{
         display: "inline-block",
-        width: thin ? 2 : 2,
-        height: thin ? 14 : 16,
+        width: 2, height: thin ? 14 : 16,
         background: "rgba(0,0,0,0.55)",
-        marginLeft: 2,
-        verticalAlign: "text-bottom",
-        borderRadius: 1,
+        marginLeft: 2, verticalAlign: "text-bottom", borderRadius: 1,
       }}
     />
   );
@@ -57,8 +55,7 @@ function ThinkingBlock({ thinking, isStreaming = false }) {
           display: "flex", alignItems: "center", gap: 6,
           background: "none", border: "none", cursor: "pointer", padding: 0,
           fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.45)",
-          fontFamily: "'Inter', sans-serif",
-          transition: "color 0.15s",
+          fontFamily: "'Inter', sans-serif", transition: "color 0.15s",
         }}
         onMouseEnter={e => e.currentTarget.style.color = "rgba(0,0,0,0.70)"}
         onMouseLeave={e => e.currentTarget.style.color = "rgba(0,0,0,0.45)"}
@@ -108,20 +105,27 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   const { t } = useLanguage();
 
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-  const [isCompareOpen, setIsCompareOpen] = useState(false);
-  const [raceQuery,    setRaceQuery]    = useState(null);
-  const [raceResponse, setRaceResponse] = useState(null);
+  const [raceQuery, setRaceQuery] = useState(null);
   const [selectedModel, setSelectedModel] = useState(
     pendingModelId ? { id: pendingModelId, name: pendingModelName } : { id: null, name: null }
   );
   const [input, setInput] = useState("");
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-  const [isConversationShared, setIsConversationShared] = useState(false);
   const [optimisticMessage, setOptimisticMessage] = useState(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [refreshingMessageId, setRefreshingMessageId] = useState(null);
   const [isSectionRefreshing, setIsSectionRefreshing] = useState(false);
+  const { files, setFiles, clearFiles, getFilePayload } = useFileUpload();
+  const {
+    inlineSuggestion,
+    corrections,
+    isLoadingSuggestion,
+    isLoadingCorrections,
+    handleKeyDown: handleIntelliKeyDown,
+    acceptCorrection,
+    dismissCorrection,
+  } = useInputIntelligence(input, (val) => setInput(val));
+  
+
 
   const pendingFiredRef = useRef(false);
   const isAtBottomRef = useRef(true);
@@ -132,13 +136,13 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
 
   const {
     setActiveChatId, setStreaming, appendStreamingContent, appendStreamingThinking,
-    stopStreaming, clearPendingMessage, isStreaming, streamingContent, streamingThinking, streamingConversationId,
+    stopStreaming, saveAndStopStreaming, clearPartial,
+    clearPendingMessage, isStreaming, streamingContent, streamingThinking, streamingConversationId,
   } = useChatStore();
 
   const queryClient = useQueryClient();
   const { data: conversationData, isLoading: loadingMessages } = useConversationMessages(initialChatId);
 
-  const conversationTitle = conversationData?.conversation?.title || "";
   const dbMessages = conversationData?.messages || [];
   const activeModelId = selectedModel.id || conversationData?.conversation?.modelId;
   const activeModelName = selectedModel.id
@@ -151,7 +155,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   const checkIfAtBottom = useCallback(() => {
     const el = messagesContainerRef.current;
     if (!el) return true;
-    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 40;
   }, []);
 
   const scrollToBottom = useCallback(() => {
@@ -167,7 +171,6 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     if (el) el.scrollTop = el.scrollHeight;
   }, []);
 
-  // Reset scroll when switching chats
   useEffect(() => {
     isAtBottomRef.current = true;
     setShowScrollBtn(false);
@@ -178,44 +181,70 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
+
     const onScroll = () => {
       const atBottom = checkIfAtBottom();
       isAtBottomRef.current = atBottom;
       setShowScrollBtn(!atBottom);
     };
+
+    const onWheel = (e) => {
+      if (e.deltaY < 0) {
+        isAtBottomRef.current = false;
+        setShowScrollBtn(true);
+      }
+    };
+
+    let touchStartY = 0;
+
+    const onTouchStart = (e) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches[0].clientY > touchStartY) {
+        isAtBottomRef.current = false;
+        setShowScrollBtn(true);
+      }
+      touchStartY = e.touches[0].clientY;
+    };
+
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+    };
   }, [checkIfAtBottom]);
 
   useEffect(() => {
-    if (isAtBottomRef.current) scrollToBottom();
+    if (isAtBottomRef.current) {
+      const el = messagesContainerRef.current;
+      if (!el) return;
+      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distFromBottom < 40) el.scrollTop = el.scrollHeight;
+    }
   }, [streamingContent, streamingThinking]); // eslint-disable-line
 
   useEffect(() => {
     if (isAtBottomRef.current) scrollToBottom();
   }, [allMessages.length]); // eslint-disable-line
 
-  // Scroll to bottom after messages load — use rAF to wait for paint
   useEffect(() => {
     if (!loadingMessages && allMessages.length > 0) {
       const el = messagesContainerRef.current;
       if (!el) return;
-      const raf = requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight;
-      });
+      const raf = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
       return () => cancelAnimationFrame(raf);
     }
   }, [loadingMessages, initialChatId]); // eslint-disable-line
 
   useEffect(() => { if (initialChatId) setActiveChatId(initialChatId); }, [initialChatId, setActiveChatId]);
-
-  useEffect(() => {
-    if (conversationData?.conversation?.isShared) {
-      setIsConversationShared(true);
-      const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      setShareUrl(`${base}/share/${conversationData.conversation.shareId}`);
-    }
-  }, [conversationData]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -251,6 +280,13 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+
+      // If user stopped, cancel the reader and break cleanly
+      if (!useChatStore.getState().isStreaming) {
+        await reader.cancel();
+        break;
+      }
+
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
@@ -298,11 +334,11 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     }
     setRaceQuery(input.trim());
     setInput("");
+    clearFiles(); // ← clear files after submit
   };
 
   const handleRaceSelect = useCallback(async (chosenResponse, chosenModel) => {
     setRaceQuery(null);
-    const content = chosenResponse;
     const queryText = raceQuery || "";
     setOptimisticMessage({ role: "user", content: queryText, createdAt: new Date().toISOString() });
     const previousMessages = dbMessages.map(m => ({ role: m.role, content: m.content }));
@@ -389,17 +425,12 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
 
   const handleModelSelect = (model) => { setSelectedModel(model); setIsModelSelectorOpen(false); };
 
-  const handleShare = async () => {
-    const r = await shareConversation(initialChatId);
-    if (r.success) { setShareUrl(r.shareUrl); setIsConversationShared(true); toast.success("Share link created!"); }
-    else toast.error(r.error || "Failed to create share link");
-  };
-
-  const handleUnshare = async () => {
-    const r = await unshareConversation(initialChatId);
-    if (r.success) { setIsConversationShared(false); toast.success("Conversation unshared"); }
-    else toast.error(r.error || "Failed to unshare");
-  };
+  const handleStop = useCallback(async () => {
+    saveAndStopStreaming();
+    await queryClient.invalidateQueries({ queryKey: ["conversation", initialChatId] });
+    await queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    clearPartial();
+  }, [saveAndStopStreaming, clearPartial, queryClient, initialChatId]);
 
   const formatMessageTime = (date) => format(new Date(date), "MMM d, h:mm a");
 
@@ -411,7 +442,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         position: "relative",
         fontFamily: "'Inter', -apple-system, sans-serif",
         WebkitFontSmoothing: "antialiased",
-        background: "#EBEBEB", // prevent flash
+        background: "#EBEBEB",
       }}
     >
       <style>{`
@@ -429,7 +460,8 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         .cv-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.65); }
         .cv-scroll { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.45) transparent; }
         .cv-input-wrap:focus-within {
-          box-shadow: 0 0 0 2px rgba(59,158,255,0.22), 0 0 0 6px rgba(59,158,255,0.06), 0 20px 56px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
+          box-shadow: 0 0 0 2px rgba(59,158,255,0.22), 0 0 0 6px rgba(59,158,255,0.06),
+            0 20px 56px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
           border-color: rgba(59,158,255,0.35) !important;
         }
         .cv-input-wrap textarea::placeholder { color: rgba(0,0,0,0.32); }
@@ -445,103 +477,14 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
       </div>
       <div className="cv-bg-c" aria-hidden="true" />
 
-      {/* ── Header — plain div, no motion to prevent re-animation ── */}
-      <div
-        style={{
-          flexShrink: 0, zIndex: 20, position: "relative",
-          padding: "14px 24px",
-          borderBottom: "1px solid rgba(0,0,0,0.07)",
-          background: "rgba(255,255,255,0.60)",
-          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-        }}
-      >
-        <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{
-              margin: 0, fontSize: 15, fontWeight: 700,
-              color: "rgba(0,0,0,0.82)",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              fontFamily: "'Inter', sans-serif", letterSpacing: "-0.01em",
-            }}>
-              {conversationTitle || "Chat"}
-            </h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
-              <p style={{ margin: 0, fontSize: 11.5, color: "rgba(0,0,0,0.40)", fontFamily: "'Inter', sans-serif" }}>
-                {dbMessages.length} messages • {activeModelName}
-              </p>
-              {isThisStreaming && (
-                <motion.span
-                  animate={{ opacity: [1, 0.4, 1] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-                  style={{ fontSize: 11, color: "rgba(0,0,0,0.40)", display: "flex", alignItems: "center", gap: 4 }}
-                >
-                  <span style={{ width: 6, height: 6, background: "rgba(0,0,0,0.35)", borderRadius: "50%", display: "inline-block" }} />
-                  {streamingThinking && !streamingContent ? "Thinking..." : "Generating..."}
-                </motion.span>
-              )}
-            </div>
-          </div>
-
-          {/* Compare button */}
-          <motion.button
-            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            onClick={() => setIsCompareOpen(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 14px", borderRadius: 11, border: "none", cursor: "pointer",
-              background: "rgba(255,255,255,0.65)",
-              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.88)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,1)",
-              fontSize: 12.5, fontWeight: 500, color: "rgba(0,0,0,0.65)",
-              fontFamily: "'Inter', sans-serif",
-              marginRight: 8, transition: "background 0.14s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.85)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
-          >
-            <LayoutGrid style={{ width: 15, height: 15 }} />
-            Compare
-          </motion.button>
-
-          {/* Share button */}
-          <motion.button
-            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            onClick={async () => {
-              setIsShareModalOpen(true);
-              if (!isConversationShared && !conversationData?.conversation?.shareId) {
-                await handleShare(); // ← only generate if no shareId exists in DB at all
-              } else if (!isConversationShared && conversationData?.conversation?.shareId) {
-              // Already has a shareId in DB, just restore the URL and mark as shared
-              const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-              setShareUrl(`${base}/share/${conversationData.conversation.shareId}`);
-              setIsConversationShared(true);
-              }
-            }}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 14px", borderRadius: 11, border: "none", cursor: "pointer",
-              background: "rgba(255,255,255,0.65)",
-              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.88)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,1)",
-              fontSize: 12.5, fontWeight: 500, color: "rgba(0,0,0,0.65)",
-              fontFamily: "'Inter', sans-serif",
-              transition: "background 0.14s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.85)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
-          >
-            <Share2 style={{ width: 15, height: 15 }} />
-            {t.share}
-          </motion.button>
-        </div>
-      </div>
-
       {/* ── Messages + Floating Input ── */}
       <div style={{ position: "relative", flex: 1, minHeight: 0, zIndex: 10 }}>
-        <div ref={messagesContainerRef} className="cv-scroll" style={{ height: "100%", overflowY: "auto", overflowX: "hidden" }}>
-          <div style={{ width: "100%", padding: "24px 16px 320px" }}>
+        <div
+          ref={messagesContainerRef}
+          className="cv-scroll"
+          style={{ height: "100%", overflowY: "auto", overflowX: "hidden" }}
+        >
+          <div style={{ width: "100%", padding: "24px 16px 360px" }}>
 
             <MessageSectionRefresh onRefresh={handleRefreshSection} isRefreshing={isSectionRefreshing} />
 
@@ -571,7 +514,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
                 {allMessages.map((msg, index) => (
                   <div
                     key={msg.id || `msg-${index}`}
@@ -613,16 +556,11 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                       }}>
                         {msg.thinking && <ThinkingBlock thinking={msg.thinking} isStreaming={false} />}
                         <div style={{
-                          padding: "12px 16px", borderRadius: 18,
-                          borderBottomLeftRadius: 6,
-                          background: "rgba(255,255,255,0.72)",
-                          border: "1px solid rgba(255,255,255,0.92)",
-                          boxShadow: "0 2px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)",
-                          maxWidth: "85%",
+                          fontSize: 14, lineHeight: 1.75, color: "rgba(0,0,0,0.78)",
+                          wordBreak: "break-word", maxWidth: "85%",
+                          fontFamily: "'Inter', sans-serif",
                         }}>
-                          <div style={{ fontSize: 14, lineHeight: 1.65, color: "rgba(0,0,0,0.78)", wordBreak: "break-word" }}>
-                            <MarkdownRenderer content={msg.content} />
-                          </div>
+                          <MarkdownRenderer content={msg.content} />
                         </div>
                         {msg.createdAt && (
                           <span style={{
@@ -658,14 +596,12 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
                       {streamingThinking && <ThinkingBlock thinking={streamingThinking} isStreaming={!streamingContent} />}
                       <div style={{
-                        padding: "12px 16px", borderRadius: 18, borderBottomLeftRadius: 6,
-                        background: "rgba(255,255,255,0.72)",
-                        border: "1px solid rgba(255,255,255,0.92)",
-                        boxShadow: "0 2px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)",
-                        maxWidth: "85%",
+                        fontSize: 14, lineHeight: 1.75, color: "rgba(0,0,0,0.78)",
+                        wordBreak: "break-word", maxWidth: "85%",
+                        fontFamily: "'Inter', sans-serif",
                       }}>
                         {streamingContent ? (
-                          <div style={{ fontSize: 14, lineHeight: 1.65, color: "rgba(0,0,0,0.78)", wordBreak: "break-word" }}>
+                          <div style={{ wordBreak: "break-word" }}>
                             <MarkdownRenderer content={streamingContent} />
                             <BlinkingCursor />
                           </div>
@@ -721,19 +657,19 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
           )}
         </AnimatePresence>
 
-        {/* ── Floating Input — plain div, no motion ── */}
+        {/* ── Floating Input ── */}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}>
-          {/* Gradient fade */}
           <div style={{
-            position: "absolute", insetInline: 0, top: -96, bottom: 0,
+            position: "absolute", insetInline: 0, top: -48, bottom: 0,
             pointerEvents: "none",
-            background: "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.62) 45%)",
+            background: "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.55) 60%)",
           }} />
 
-          <div style={{ position: "relative", maxWidth: 680, margin: "0 auto", padding: "0 16px 16px", paddingTop: 32 }}>
+          <div style={{ position: "relative", maxWidth: 680, margin: "0 auto", padding: "0 16px 16px", paddingTop: 16 }}>
             <div
               className="cv-input-wrap"
               style={{
+                position: "relative",
                 background: "rgba(255,255,255,0.75)",
                 backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)",
                 border: "1px solid rgba(255,255,255,0.92)",
@@ -742,6 +678,40 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                 transition: "box-shadow 0.2s ease, border-color 0.2s ease",
               }}
             >
+              {/* ← ADD THIS LINE */}
+              <FilePreviewStrip files={files} onFilesChange={setFiles} disabled={isThisStreaming} />
+
+              {/* ── Corrections bar ── */}
+              {/* <CorrectionsBar
+                corrections={corrections}
+                onAccept={acceptCorrection}
+                onDismiss={dismissCorrection}
+                isLoading={isLoadingCorrections}
+              /> */}
+
+              {/* ── Textarea with ghost suggestion ── */}
+              {/* {inlineSuggestion && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    top: 0, left: 0, right: 0,
+                    pointerEvents: "none",
+                    padding: "18px 22px 10px",
+                    fontSize: 14, fontWeight: 400,
+                    lineHeight: 1.6,
+                    fontFamily: "'Inter', sans-serif",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    color: "transparent",
+                    zIndex: 1,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <span style={{ visibility: "hidden" }}>{input}</span>
+                  <span style={{ color: "rgba(0,0,0,0.28)" }}>{inlineSuggestion}</span>
+                </div>
+              )} */}
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -751,6 +721,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                 rows={1}
                 className="cv-scroll"
                 style={{
+                  position: "relative", zIndex: 2,
                   display: "block", width: "100%",
                   padding: "18px 22px 10px",
                   background: "transparent", border: "none", outline: "none",
@@ -761,7 +732,10 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                   maxHeight: 160, overflowY: "auto", boxSizing: "border-box",
                   scrollbarWidth: "none",
                 }}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
+                onKeyDown={e => {
+                  handleIntelliKeyDown(e);
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit(); }
+                }}
               />
 
               <div style={{
@@ -770,36 +744,18 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
               }}>
                 {/* Left tools */}
                 <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <button
-                    type="button" disabled={isThisStreaming}
-                    style={{
-                      width: 34, height: 34, borderRadius: 9, border: "none",
-                      background: "transparent", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      opacity: isThisStreaming ? 0.3 : 1, transition: "background 0.14s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.04)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <Mic style={{ width: 17, height: 17, color: "rgba(0,0,0,0.60)" }} />
-                  </button>
-                  <button
-                    type="button" disabled={isThisStreaming}
-                    style={{
-                      width: 34, height: 34, borderRadius: 9, border: "none",
-                      background: "transparent", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      opacity: isThisStreaming ? 0.3 : 1, transition: "background 0.14s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.04)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <Plus style={{ width: 18, height: 18, color: "rgba(0,0,0,0.60)" }} />
-                  </button>
+                  <FileUploadManager
+                    files={files}
+                    onFilesChange={setFiles}
+                    disabled={isThisStreaming}
+                  />
                 </div>
 
-                {/* Right: model + send */}
+                {/* Right: model + send/stop */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+
+                  <TabHint visible={!!inlineSuggestion} isLoading={isLoadingSuggestion} />
+
                   <button
                     type="button" ref={modelButtonRef}
                     onClick={() => setIsModelSelectorOpen(true)}
@@ -836,54 +792,55 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                     <ChevronDown style={{ width: 11, height: 11, color: "rgba(0,0,0,0.45)", flexShrink: 0 }} strokeWidth={2.2} />
                   </button>
 
-                  {/* Send button */}
-                  <button
-                    onClick={onSubmit}
-                    disabled={!input.trim() || isThisStreaming}
-                    style={{
-                      width: 36, height: 36, borderRadius: "50%",
-                      border: "none", cursor: input.trim() && !isThisStreaming ? "pointer" : "not-allowed",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      background: input.trim() && !isThisStreaming
-                        ? "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)"
-                        : "rgba(0,0,0,0.07)",
-                      opacity: input.trim() && !isThisStreaming ? 1 : 0.35,
-                      boxShadow: input.trim() && !isThisStreaming
-                        ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)"
-                        : "none",
-                      transition: "all 0.16s cubic-bezier(.34,1.56,.64,1)",
-                      flexShrink: 0,
-                    }}
-                    onMouseEnter={e => {
-                      if (input.trim() && !isThisStreaming) {
-                        e.currentTarget.style.transform = "scale(1.08)";
-                        e.currentTarget.style.boxShadow = "0 10px 30px rgba(59,158,255,0.55)";
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = input.trim() && !isThisStreaming
-                        ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)"
-                        : "none";
-                    }}
-                  >
+                  {/* Send / Stop — animated swap */}
+                  <AnimatePresence mode="wait">
                     {isThisStreaming ? (
-                      <motion.div
-                        initial={false}
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        style={{
-                          width: 15, height: 15,
-                          border: "2px solid rgba(255,255,255,0.3)",
-                          borderTopColor: "#fff", borderRadius: "50%",
-                        }}
-                      />
+                      <StopButton key="stop" onStop={handleStop} />
                     ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <motion.div
+                        key="send"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      >
+                        <button
+                          onClick={onSubmit}
+                          disabled={!input.trim()}
+                          style={{
+                            width: 36, height: 36, borderRadius: "50%",
+                            border: "none", cursor: input.trim() ? "pointer" : "not-allowed",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            background: input.trim()
+                              ? "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)"
+                              : "rgba(0,0,0,0.07)",
+                            opacity: input.trim() ? 1 : 0.35,
+                            boxShadow: input.trim()
+                              ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)"
+                              : "none",
+                            transition: "all 0.16s cubic-bezier(.34,1.56,.64,1)",
+                            flexShrink: 0,
+                          }}
+                          onMouseEnter={e => {
+                            if (input.trim()) {
+                              e.currentTarget.style.transform = "scale(1.08)";
+                              e.currentTarget.style.boxShadow = "0 10px 30px rgba(59,158,255,0.55)";
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.transform = "scale(1)";
+                            e.currentTarget.style.boxShadow = input.trim()
+                              ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)"
+                              : "none";
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      </motion.div>
                     )}
-                  </button>
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
@@ -898,22 +855,22 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         </div>
       </div>
 
-      <ModelSelector isOpen={isModelSelectorOpen} onClose={() => setIsModelSelectorOpen(false)}
-        selectedModel={selectedModel} onSelectModel={handleModelSelect} triggerRef={modelButtonRef} />
-      <AnimatePresence>
-        {isCompareOpen && <CompareView onClose={() => setIsCompareOpen(false)} />}
-      </AnimatePresence>
+      <ModelSelector
+        isOpen={isModelSelectorOpen}
+        onClose={() => setIsModelSelectorOpen(false)}
+        selectedModel={selectedModel}
+        onSelectModel={handleModelSelect}
+        triggerRef={modelButtonRef}
+      />
       <AnimatePresence>
         {raceQuery && (
           <ModelRacePopup
             query={raceQuery}
-            onClose={() => { setRaceQuery(null); }}
+            onClose={() => setRaceQuery(null)}
             onUseResponse={handleRaceSelect}
           />
         )}
       </AnimatePresence>
-      <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)}
-        shareUrl={shareUrl} onShare={handleShare} onUnshare={handleUnshare} isShared={isConversationShared} />
     </div>
   );
 }

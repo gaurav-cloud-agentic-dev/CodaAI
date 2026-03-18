@@ -161,7 +161,7 @@ const ChatGroup = ({
 // ── SideBar ───────────────────────────────────────────────────────────────────
 const SideBar = () => {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(true);
+  // const [isOpen, setIsOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -180,6 +180,8 @@ const SideBar = () => {
   const togglePinMutation = useTogglePin();
   const deleteConversationMutation = useDeleteConversation();
   const { activeChatId, setActiveChatId, clearActiveChatId } = useChatStore();
+  const isOpen = useChatStore(s => s.sidebarOpen);
+  const setIsOpen = useChatStore(s => s.setSidebarOpen);
   const { t } = useLanguage();
 
   const { pinnedChats, unpinnedChats } = useMemo(() => {
@@ -194,8 +196,8 @@ const SideBar = () => {
   }, [conversations, searchQuery]);
 
   const menuItems = [
-    { id: "new",    icon: Plus,   label: t.newChat, action: () => { clearActiveChatId(); router.push("/"); } },
-    { id: "search", icon: Search, label: t.search,  action: () => setIsSearchOpen(true) },
+    { id: "new", icon: Plus, label: t.newChat, action: () => { clearActiveChatId(); setIsOpen(false); router.push("/"); } },
+    { id: "search", icon: Search, label: t.search, action: () => setIsSearchOpen(true) },
   ];
 
   const formatChatTime = useCallback((date) => {
@@ -213,8 +215,9 @@ const SideBar = () => {
   const handleChatClick = useCallback((chatId) => {
     setActiveChatId(chatId);
     setOpenChatMenu(null);
+    setIsOpen(true);
     router.push(`/chat/${chatId}`);
-  }, [setActiveChatId, router]);
+  }, [setActiveChatId, router, setIsOpen]);
 
   const handleTogglePin = async (e, chatId) => {
     e.stopPropagation();
@@ -319,7 +322,7 @@ const SideBar = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -8 }}
                   transition={ease}
-                  onClick={() => { clearActiveChatId(); router.push("/"); }}
+                  onClick={() => { clearActiveChatId(); setIsOpen(false); router.push("/"); }}
                   style={{
                     margin: 0, fontSize: 18, fontWeight: 700,
                     color: "rgba(0,0,0,0.88)", letterSpacing: "-0.02em",

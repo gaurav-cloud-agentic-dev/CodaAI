@@ -6,11 +6,19 @@ export const useChatStore = create(
     (set, get) => ({
       activeChatId: null,
 
+      // Sidebar state
+      sidebarOpen: false,
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+
       // Streaming state
       isStreaming: false,
       streamingContent: "",
       streamingThinking: "",
       streamingConversationId: null,
+
+      // Partial content saved on stop
+      partialContent: null,
+      partialThinking: null,
 
       // Pending message — set before chat is created, read by ChatView on mount
       pendingMessage: null,
@@ -43,7 +51,19 @@ export const useChatStore = create(
           streamingConversationId: null,
         }),
 
-      // Store the first message + model before the conversation is created
+      // Save partial content then stop — used when user clicks stop button
+      saveAndStopStreaming: () =>
+        set((state) => ({
+          isStreaming: false,
+          streamingContent: "",
+          streamingThinking: "",
+          streamingConversationId: null,
+          partialContent: state.streamingContent || null,
+          partialThinking: state.streamingThinking || null,
+        })),
+
+      clearPartial: () => set({ partialContent: null, partialThinking: null }),
+
       setPendingMessage: (message, modelId, modelName) =>
         set({
           pendingMessage: message,
@@ -51,7 +71,6 @@ export const useChatStore = create(
           pendingModelName: modelName,
         }),
 
-      // Clear after ChatView fires it — prevents re-firing on re-renders
       clearPendingMessage: () =>
         set({
           pendingMessage: null,
@@ -61,7 +80,7 @@ export const useChatStore = create(
     }),
     {
       name: "chat-storage",
-      partialize: () => ({}), // Nothing persisted — all state is ephemeral
+      partialize: () => ({}),
     }
   )
 );

@@ -9,12 +9,10 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-// ─── Animation presets ────────────────────────────────────────────────────────
 const ease   = { type: "tween", ease: [0.22, 1, 0.36, 1], duration: 0.15 };
 const fast   = { type: "tween", ease: [0.22, 1, 0.36, 1], duration: 0.08 };
 const spring = { type: "spring", stiffness: 700, damping: 40, mass: 0.5 };
 
-// ─── Inject styles ────────────────────────────────────────────────────────────
 const INPUT_RING_CSS = `
   .chat-form-input-ring { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   .chat-form-input-ring:focus-within {
@@ -38,7 +36,6 @@ function useInputRingStyles() {
   }, []);
 }
 
-// ─── Tiny helpers ─────────────────────────────────────────────────────────────
 const fmtTime = (d) => format(new Date(d), "MMM d · h:mm a");
 
 function useCopyText() {
@@ -91,7 +88,6 @@ function EditBar({ initialValue, onSave, onCancel }) {
       transition={ease}
       style={{ width: "100%" }}
     >
-      {/* Glass edit container */}
       <div
         className="chat-form-input-ring"
         style={{
@@ -109,10 +105,7 @@ function EditBar({ initialValue, onSave, onCancel }) {
         }} />
 
         {/* Header label */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "12px 16px 6px",
-        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px 6px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Pencil style={{ width: 11, height: 11, color: "rgba(0,0,0,0.35)" }} />
             <span style={{
@@ -163,9 +156,7 @@ function EditBar({ initialValue, onSave, onCancel }) {
             transition={fast}
             style={{
               height: "100%", borderRadius: 99,
-              background: overLimit
-                ? "#EF4444"
-                : "linear-gradient(90deg, #60BFFF, #3B9EFF)",
+              background: overLimit ? "#EF4444" : "linear-gradient(90deg, #60BFFF, #3B9EFF)",
             }}
           />
         </div>
@@ -175,15 +166,11 @@ function EditBar({ initialValue, onSave, onCancel }) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 16px 14px",
         }}>
-          <p style={{
-            fontSize: 10, color: "rgba(0,0,0,0.28)",
-            fontFamily: "'Inter', sans-serif", margin: 0,
-          }}>
+          <p style={{ fontSize: 10, color: "rgba(0,0,0,0.28)", fontFamily: "'Inter', sans-serif", margin: 0 }}>
             <kbd style={{ fontFamily: "monospace" }}>Enter</kbd> to save ·{" "}
             <kbd style={{ fontFamily: "monospace" }}>Esc</kbd> to cancel
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Cancel */}
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} transition={fast}
               onClick={onCancel}
@@ -202,7 +189,6 @@ function EditBar({ initialValue, onSave, onCancel }) {
               Cancel
             </motion.button>
 
-            {/* Save */}
             <motion.button
               whileHover={!overLimit && value.trim() ? { scale: 1.02 } : {}}
               whileTap={!overLimit && value.trim() ? { scale: 0.97 } : {}}
@@ -235,6 +221,33 @@ function EditBar({ initialValue, onSave, onCancel }) {
   );
 }
 
+// ─── Action Pill ──────────────────────────────────────────────────────────────
+function ActionPill({ icon, onClick, active = false, disabled = false }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      onClick={!disabled ? onClick : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      disabled={disabled}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        width: 26, height: 26, borderRadius: 7,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.4 : 1,
+        border: "none",
+        background: hovered ? "rgba(0,0,0,0.07)" : "transparent",
+        color: active ? "#059669" : hovered ? "rgba(0,0,0,0.70)" : "rgba(0,0,0,0.45)",
+        transition: "background 0.12s ease, color 0.12s ease",
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </button>
+  );
+}
+
 // ─── User Message ─────────────────────────────────────────────────────────────
 export function UserMessage({ message, onEdit, onRefresh, isRefreshing = false }) {
   useInputRingStyles();
@@ -263,10 +276,17 @@ export function UserMessage({ message, onEdit, onRefresh, isRefreshing = false }
   };
 
   return (
-    <motion.div layout style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0, width: "100%" }}>
       <AnimatePresence mode="wait">
         {isEditing ? (
-          <motion.div key="edit" style={{ width: "100%", maxWidth: "75%" }} layout>
+          <motion.div
+            key="edit"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={fast}
+            style={{ width: "100%", maxWidth: "75%" }}
+          >
             <EditBar
               initialValue={message.content}
               onSave={handleSaveEdit}
@@ -274,30 +294,28 @@ export function UserMessage({ message, onEdit, onRefresh, isRefreshing = false }
             />
           </motion.div>
         ) : (
-          <motion.div
-            key="bubble"
-            layout
+          <div
             style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", maxWidth: "75%" }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            {/* Message bubble — glass white */}
-            <motion.div
-              layout
+            {/* Bubble */}
+            <div
               style={{
                 position: "relative",
                 borderRadius: 18, borderBottomRightRadius: 5,
-                padding: "10px 16px",
+                padding: "10px 16px 30px",
                 wordBreak: "break-word", cursor: "default", userSelect: "text",
                 background: "rgba(255,255,255,0.82)",
                 backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
                 border: "1px solid rgba(255,255,255,0.95)",
                 boxShadow: showActions
-                  ? "0 0 0 2px rgba(59,158,255,0.18), 0 6px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)"
+                  ? "0 0 0 2px rgba(59,158,255,0.12), 0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)"
                   : "0 2px 10px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
                 transition: "box-shadow 0.22s ease",
               }}
             >
+              {/* Message text */}
               <p style={{
                 margin: 0, fontSize: 14, color: "rgba(0,0,0,0.78)",
                 whiteSpace: "pre-wrap", lineHeight: 1.65, fontWeight: 400,
@@ -305,158 +323,77 @@ export function UserMessage({ message, onEdit, onRefresh, isRefreshing = false }
               }}>
                 {message.content}
               </p>
-            </motion.div>
 
-            {/* Meta row: time + actions */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>
-              {/* Timestamp */}
-              {message.createdAt && (
-                <motion.div
-                  initial={false}
-                  animate={{ opacity: showActions ? 0.65 : 0.35 }}
-                  transition={fast}
-                  style={{ display: "flex", alignItems: "center", gap: 4 }}
-                >
-                  <Clock style={{ width: 9, height: 9, color: "rgba(0,0,0,0.35)" }} />
+              {/* Bottom-right row — absolutely pinned, zero layout impact */}
+              <div style={{
+                position: "absolute", bottom: 6, right: 12,
+                display: "flex", alignItems: "center", gap: 2,
+              }}>
+                {/* Icons — fade in on hover, always in DOM */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 0,
+                  opacity: showActions ? 1 : 0,
+                  pointerEvents: showActions ? "auto" : "none",
+                  transition: "opacity 0.15s ease",
+                }}>
+                  <ActionPill
+                    icon={
+                      <motion.span
+                        animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
+                        transition={isRefreshing
+                          ? { duration: 0.8, repeat: Infinity, ease: "linear" }
+                          : {}}
+                        style={{ display: "inline-flex" }}
+                      >
+                        <RefreshCw style={{ width: 13, height: 13 }} />
+                      </motion.span>
+                    }
+                    onClick={() => onRefresh?.(message.id)}
+                    disabled={isRefreshing}
+                  />
+                  <ActionPill
+                    icon={<Pencil style={{ width: 13, height: 13 }} />}
+                    onClick={() => { setIsEditing(true); setShowActions(false); }}
+                  />
+                  <ActionPill
+                    icon={copied
+                      ? <Check style={{ width: 13, height: 13 }} />
+                      : <Copy style={{ width: 13, height: 13 }} />
+                    }
+                    active={copied}
+                    onClick={() => copy(message.content)}
+                  />
+                </div>
+
+                {/* Date — always visible, dims when not hovered */}
+                {message.createdAt && (
                   <span style={{
-                    fontSize: 10, fontWeight: 500, color: "rgba(0,0,0,0.40)",
+                    fontSize: 10, fontWeight: 500,
+                    color: showActions ? "rgba(0,0,0,0.42)" : "rgba(0,0,0,0.28)",
                     fontFamily: "'Inter', sans-serif",
                     fontVariantNumeric: "tabular-nums",
+                    whiteSpace: "nowrap",
+                    userSelect: "none",
+                    marginLeft: 4,
+                    transition: "color 0.15s",
                   }}>
                     {fmtTime(message.createdAt)}
                   </span>
-                </motion.div>
-              )}
-
-              {/* Action buttons */}
-              <AnimatePresence>
-                {showActions && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 4, scale: 0.95 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: 4, scale: 0.95 }}
-                    transition={fast}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 2,
-                      padding: "3px 4px", borderRadius: 12,
-                      background: "rgba(255,255,255,0.88)",
-                      border: "1px solid rgba(0,0,0,0.07)",
-                      boxShadow: "0 2px 14px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)",
-                      backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-                    }}
-                  >
-                    {/* Copy */}
-                    <ActionPill
-                      icon={copied
-                        ? <Check style={{ width: 11, height: 11 }} />
-                        : <Copy style={{ width: 11, height: 11 }} />
-                      }
-                      label={copied ? "Copied" : "Copy"}
-                      active={copied}
-                      onClick={() => copy(message.content)}
-                    />
-
-                    <span style={{ width: 1, height: 12, background: "rgba(0,0,0,0.08)", flexShrink: 0 }} />
-
-                    {/* Edit */}
-                    <ActionPill
-                      icon={<Pencil style={{ width: 11, height: 11 }} />}
-                      label="Edit"
-                      onClick={() => { setIsEditing(true); setShowActions(false); }}
-                    />
-
-                    <span style={{ width: 1, height: 12, background: "rgba(0,0,0,0.08)", flexShrink: 0 }} />
-
-                    {/* Retry */}
-                    <ActionPill
-                      icon={
-                        <motion.span
-                          animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
-                          transition={isRefreshing ? { duration: 0.8, repeat: Infinity, ease: "linear" } : {}}
-                          style={{ display: "inline-flex" }}
-                        >
-                          <RefreshCw style={{ width: 11, height: 11 }} />
-                        </motion.span>
-                      }
-                      label="Retry"
-                      onClick={() => onRefresh?.(message.id)}
-                      disabled={isRefreshing}
-                    />
-                  </motion.div>
                 )}
-              </AnimatePresence>
+              </div>
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// ─── Action Pill ──────────────────────────────────────────────────────────────
-function ActionPill({ icon, label, onClick, active = false, disabled = false }) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <motion.button
-      whileHover={!disabled ? { scale: 1.04 } : {}}
-      whileTap={!disabled ? { scale: 0.96 } : {}}
-      transition={fast}
-      onClick={!disabled ? onClick : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      disabled={disabled}
-      style={{
-        display: "flex", alignItems: "center", gap: 4,
-        padding: "4px 8px", borderRadius: 8, border: "none",
-        minWidth: 0, cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.4 : 1,
-        fontSize: 10.5, fontWeight: 600,
-        fontFamily: "'Inter', sans-serif",
-        transition: "all 0.12s ease",
-        background: active
-          ? "rgba(16,185,129,0.10)"
-          : hovered ? "rgba(59,158,255,0.08)" : "transparent",
-        border: active
-          ? "1px solid rgba(16,185,129,0.25)"
-          : hovered ? "1px solid rgba(59,158,255,0.18)" : "1px solid transparent",
-        color: active
-          ? "#059669"
-          : hovered ? "#1A7AF0" : "rgba(0,0,0,0.48)",
-        boxShadow: hovered && !active
-          ? "0 1px 6px rgba(59,158,255,0.12)"
-          : "none",
-      }}
-    >
-      {icon}
-      <AnimatePresence>
-        {hovered && (
-          <motion.span
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            transition={fast}
-            style={{ overflow: "hidden", whiteSpace: "nowrap" }}
-          >
-            {label}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </motion.button>
+    </div>
   );
 }
 
 // ─── Message Section Refresh Button ──────────────────────────────────────────
 export function MessageSectionRefresh({ onRefresh, isRefreshing = false }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}
-    >
-      <motion.button
-        whileHover={!isRefreshing ? { scale: 1.02 } : {}}
-        whileTap={!isRefreshing ? { scale: 0.97 } : {}}
-        transition={spring}
+    <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
+      <button
         onClick={onRefresh}
         disabled={isRefreshing}
         style={{
@@ -473,10 +410,10 @@ export function MessageSectionRefresh({ onRefresh, isRefreshing = false }) {
             : "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
           backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
           opacity: isRefreshing ? 0.7 : 1,
-          transition: "all 0.15s",
+          transition: "background 0.15s",
         }}
         onMouseEnter={e => { if (!isRefreshing) e.currentTarget.style.background = "rgba(255,255,255,0.92)"; }}
-        onMouseLeave={e => e.currentTarget.style.background = isRefreshing ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.75)"}
+        onMouseLeave={e => { e.currentTarget.style.background = isRefreshing ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.75)"; }}
       >
         <motion.span
           animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
@@ -486,8 +423,8 @@ export function MessageSectionRefresh({ onRefresh, isRefreshing = false }) {
           <RefreshCw style={{ width: 13, height: 13 }} />
         </motion.span>
         {isRefreshing ? "Refreshing…" : "Refresh messages"}
-      </motion.button>
-    </motion.div>
+      </button>
+    </div>
   );
 }
 
@@ -504,16 +441,17 @@ export default function ChatForm({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <MessageSectionRefresh onRefresh={onRefreshSection} isRefreshing={isSectionRefreshing} />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "8px 16px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28, padding: "8px 16px" }}>
         {messages.map((msg, index) =>
           msg.role === "user" ? (
             <div
               key={msg.id || `msg-${index}`}
-              style={{ display: "flex", alignItems: "flex-end", gap: 8, width: "100%", flexDirection: "row-reverse" }}
+              style={{
+                display: "flex", alignItems: "flex-end", gap: 8,
+                width: "100%", flexDirection: "row-reverse",
+              }}
             >
-              {/* Avatar */}
-              <div style={{ flexShrink: 0, marginBottom: 24 }}>
+              <div style={{ flexShrink: 0, marginBottom: 4 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: "50%",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -524,7 +462,6 @@ export default function ChatForm({
                   <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(0,0,0,0.55)" }}>U</span>
                 </div>
               </div>
-
               <UserMessage
                 message={msg}
                 onEdit={onEditMessage}

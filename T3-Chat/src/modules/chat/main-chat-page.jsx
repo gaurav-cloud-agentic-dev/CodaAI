@@ -4,14 +4,15 @@ import { motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import {
   AlertCircle, Code, GraduationCap, PenTool,
-  Coffee, Crown, ChevronDown, Paperclip, ImageIcon,
-  FileText, Video,
+  Coffee, Crown, ChevronDown,
 } from "lucide-react";
 import ModelSelector from "./model-selector";
 import { useInitializeChat } from "./hooks/chat";
 import { useChatStore } from "./store/chat-store";
 import { toast } from "sonner";
 import { useLanguage } from "./LanguageSettings";
+import { useInputIntelligence, GhostSuggestion, CorrectionsBar, TabHint } from "./input-intelligence";
+import FileUploadManager, { FilePreviewStrip, useFileUpload } from "./file-upload-manager";
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -140,22 +141,42 @@ const MainChatPage = () => {
   const [open, setOpen]   = useState(false);
   const [msg, setMsg]     = useState("");
   const [model, setModel] = useState({ id: null, name: null });
+  const { files, setFiles, clearFiles, getFilePayload } = useFileUpload();
+  const {
+  inlineSuggestion,
+  corrections,
+  isLoadingSuggestion,
+  isLoadingCorrections,
+  handleKeyDown: handleIntelliKeyDown,
+  acceptCorrection,
+  dismissCorrection,
+} = useInputIntelligence(msg, (val) => setMsg(val));
 
   const taRef   = useRef(null);
   const mBtnRef = useRef(null);
 
-  const activeChatId          = useChatStore(s => s.activeChatId);
+  const activeChatId           = useChatStore(s => s.activeChatId);
   const setPendingMessage      = useChatStore(s => s.setPendingMessage);
+  const setSidebarOpen         = useChatStore(s => s.setSidebarOpen);
   const initializeChatMutation = useInitializeChat();
   const isLoading              = initializeChatMutation.isPending;
 
+  // Auto-resize textarea
   useEffect(() => {
     if (!taRef.current) return;
     taRef.current.style.height = "auto";
     taRef.current.style.height = Math.min(taRef.current.scrollHeight, 130) + "px";
   }, [msg]);
 
-  // ── KEY FIX: don't return null — hide with CSS instead ──
+  // Reset model and message when returning to main chat
+  useEffect(() => {
+    if (!activeChatId) {
+      setModel({ id: null, name: null });
+      setMsg("");
+      clearFiles();
+    }
+  }, [activeChatId]);
+
   const isHidden = !!activeChatId;
 
   const handleModelSelect = m => { setModel(m); setOpen(false); };
@@ -171,9 +192,17 @@ const MainChatPage = () => {
       return;
     }
     const content = msg.trim();
+    const filePayload = getFilePayload();
     setMsg("");
+    clearFiles();
     setPendingMessage(content, model.id, model.name);
-    await initializeChatMutation.mutateAsync({ content, modelId: model.id, modelName: model.name });
+    setSidebarOpen(false);
+    await initializeChatMutation.mutateAsync({ 
+      content, 
+      modelId: model.id, 
+      modelName: model.name,
+      files: filePayload
+    });
   };
 
   const handleKey = e => {
@@ -344,6 +373,7 @@ const MainChatPage = () => {
             <div
               className="mcp-glass"
               style={{
+                position: "relative",
                 background: "rgba(255,255,255,0.75)",
                 backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)",
                 border: "1px solid rgba(255,255,255,0.92)",
@@ -351,15 +381,57 @@ const MainChatPage = () => {
                 boxShadow: "0 8px 32px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,1)",
               }}
             >
+              {/* ← ADD THIS — file previews inside the box */}
+              <FilePreviewStrip
+                files={files}
+                onFilesChange={setFiles}
+                disabled={isLoading}
+              />
+
+              {/* ── Corrections bar ── */}
+              <CorrectionsBar
+                corrections={corrections}
+                onAccept={acceptCorrection}
+                onDismiss={dismissCorrection}
+                isLoading={isLoadingCorrections}
+              />
+
+              {/* ── Textarea with ghost suggestion ── */}
+              {inlineSuggestion && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    top: 0, left: 0, right: 0,
+                    pointerEvents: "none",
+                    padding: "18px 22px 10px",
+                    fontSize: 14, fontWeight: 400,
+                    lineHeight: 1.6,
+                    fontFamily: "'Inter', sans-serif",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    color: "transparent",
+                    zIndex: 1,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <span style={{ visibility: "hidden" }}>{msg}</span>
+                  <span style={{ color: "rgba(0,0,0,0.28)" }}>{inlineSuggestion}</span>
+                </div>
+              )}
               <textarea
                 ref={taRef}
                 value={msg}
                 onChange={e => setMsg(e.target.value)}
-                onKeyDown={handleKey}
+                onKeyDown={e => {
+                  handleIntelliKeyDown(e);
+                  handleKey(e);
+                }}
                 placeholder={t.placeholder || "Type your message…"}
                 disabled={isLoading}
                 rows={1}
                 style={{
+                  position: "relative", zIndex: 2,
                   display: "block", width: "100%",
                   padding: "18px 22px 10px",
                   background: "transparent", border: "none", outline: "none",
@@ -377,21 +449,15 @@ const MainChatPage = () => {
                 padding: "2px 12px 14px",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {[
-                    { Icon: Paperclip, title: "Attach"   },
-                    { Icon: ImageIcon, title: "Image"    },
-                    { Icon: FileText,  title: "Document" },
-                    { Icon: Video,     title: "Video"    },
-                  ].map(({ Icon, title }) => (
-                    <button key={title} title={title} disabled={isLoading}
-                      className="mcp-tbtn"
-                      style={{ padding: "9px 10px", opacity: isLoading ? 0.28 : 1 }}
-                    >
-                      <Icon style={{ width: 18, height: 18, color: "rgba(0,0,0,0.55)" }} strokeWidth={1.65} />
-                    </button>
-                  ))}
+                  <FileUploadManager
+                    files={files}
+                    onFilesChange={setFiles}
+                    disabled={isLoading}
+                  />
 
                   <div style={{ width: 1, height: 18, background: "rgba(0,0,0,0.12)", margin: "0 8px", flexShrink: 0 }} />
+
+                  <TabHint visible={!!inlineSuggestion} isLoading={isLoadingSuggestion} />
 
                   <button
                     ref={mBtnRef} onClick={() => setOpen(true)} disabled={isLoading}
@@ -470,7 +536,7 @@ const MainChatPage = () => {
 
             <p style={{
               textAlign: "center", marginTop: 9,
-              fontSize: 11, color: "rgba(0,0,0,0.45)",
+              fontSize: 11, color: "rgba(0,0,0,0.88)",
               letterSpacing: "0.03em", fontFamily: "'Inter', sans-serif",
             }}>
               {t.disclaimer || "CodaAI can make mistakes. Consider checking important info."}
