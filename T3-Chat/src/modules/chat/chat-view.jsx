@@ -18,18 +18,18 @@ import { UserMessage, MessageSectionRefresh } from "./chat-form";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 import StopButton from "./stop-button";
 import FileUploadManager, { FilePreviewStrip, useFileUpload } from "./file-upload-manager";
-import { useInputIntelligence, GhostSuggestion, CorrectionsBar, TabHint } from "./input-intelligence";
+import { useInputIntelligence, CorrectionsBar, TabHint } from "./input-intelligence";
+import { useTheme, DarkModeStyles, getDarkTokens } from "./theme-context";
 
 const classyEase = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.38 };
 const classyFast = { type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.22 };
-
 
 function decodeB64(b64) {
   try { return Buffer.from(b64, "base64").toString("utf8"); }
   catch { return ""; }
 }
 
-function BlinkingCursor({ thin = false }) {
+function BlinkingCursor({ thin = false, isDark }) {
   return (
     <motion.span
       animate={{ opacity: [1, 1, 0, 0] }}
@@ -37,16 +37,17 @@ function BlinkingCursor({ thin = false }) {
       style={{
         display: "inline-block",
         width: 2, height: thin ? 14 : 16,
-        background: "rgba(0,0,0,0.55)",
+        background: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)",
         marginLeft: 2, verticalAlign: "text-bottom", borderRadius: 1,
       }}
     />
   );
 }
 
-function ThinkingBlock({ thinking, isStreaming = false }) {
+function ThinkingBlock({ thinking, isStreaming = false, isDark }) {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!thinking) return null;
+
   return (
     <div style={{ marginBottom: 8 }}>
       <button
@@ -54,11 +55,12 @@ function ThinkingBlock({ thinking, isStreaming = false }) {
         style={{
           display: "flex", alignItems: "center", gap: 6,
           background: "none", border: "none", cursor: "pointer", padding: 0,
-          fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.45)",
+          fontSize: 11, fontWeight: 600,
+          color: isDark ? "rgba(255,255,255,0.38)" : "rgba(0,0,0,0.45)",
           fontFamily: "'Inter', sans-serif", transition: "color 0.15s",
         }}
-        onMouseEnter={e => e.currentTarget.style.color = "rgba(0,0,0,0.70)"}
-        onMouseLeave={e => e.currentTarget.style.color = "rgba(0,0,0,0.45)"}
+        onMouseEnter={e => e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.70)"}
+        onMouseLeave={e => e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.38)" : "rgba(0,0,0,0.45)"}
       >
         <Brain style={{ width: 13, height: 13 }} />
         <span>{isStreaming ? "Thinking..." : "Thought process"}</span>
@@ -66,13 +68,18 @@ function ThinkingBlock({ thinking, isStreaming = false }) {
           <motion.span
             animate={{ opacity: [1, 0.3, 1] }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "inline-block", marginLeft: 2 }}
+            style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)",
+              display: "inline-block", marginLeft: 2,
+            }}
           />
         )}
         <motion.span animate={{ rotate: isExpanded ? 180 : 0 }} transition={classyFast} style={{ marginLeft: 2, display: "inline-flex" }}>
           <ChevronDown style={{ width: 12, height: 12 }} />
         </motion.span>
       </button>
+
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -82,16 +89,17 @@ function ThinkingBlock({ thinking, isStreaming = false }) {
           >
             <div style={{
               marginTop: 8, padding: "10px 14px", borderRadius: 12,
-              background: "rgba(255,255,255,0.55)",
-              border: "1px solid rgba(0,0,0,0.07)",
+              background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.55)",
+              border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.07)",
               maxHeight: 256, overflowY: "auto",
             }}>
               <p style={{
-                fontSize: 11.5, color: "rgba(0,0,0,0.55)",
+                fontSize: 11.5,
+                color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.55)",
                 whiteSpace: "pre-wrap", lineHeight: 1.6,
                 fontFamily: "monospace", margin: 0,
               }}>
-                {thinking}{isStreaming && <BlinkingCursor thin />}
+                {thinking}{isStreaming && <BlinkingCursor thin isDark={isDark} />}
               </p>
             </div>
           </motion.div>
@@ -103,6 +111,8 @@ function ThinkingBlock({ thinking, isStreaming = false }) {
 
 export default function ChatView({ initialChatId, pendingMessage, pendingModelId, pendingModelName }) {
   const { t } = useLanguage();
+  const { isDark } = useTheme();
+  const dk = getDarkTokens(isDark);
 
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [raceQuery, setRaceQuery] = useState(null);
@@ -114,25 +124,23 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [refreshingMessageId, setRefreshingMessageId] = useState(null);
   const [isSectionRefreshing, setIsSectionRefreshing] = useState(false);
+  // ── CHANGE 1: track whether any message is being edited ──────────────────
+  const [isEditingMessage, setIsEditingMessage] = useState(false);
+
   const { files, setFiles, clearFiles, getFilePayload } = useFileUpload();
   const {
-    inlineSuggestion,
-    corrections,
-    isLoadingSuggestion,
-    isLoadingCorrections,
+    inlineSuggestion, corrections,
+    isLoadingSuggestion, isLoadingCorrections,
     handleKeyDown: handleIntelliKeyDown,
-    acceptCorrection,
-    dismissCorrection,
+    acceptCorrection, dismissCorrection,
   } = useInputIntelligence(input, (val) => setInput(val));
-  
 
-
-  const pendingFiredRef = useRef(false);
-  const isAtBottomRef = useRef(true);
+  const pendingFiredRef     = useRef(false);
+  const isAtBottomRef       = useRef(true);
   const messagesContainerRef = useRef(null);
-  const messagesEndRef = useRef(null);
-  const modelButtonRef = useRef(null);
-  const textareaRef = useRef(null);
+  const messagesEndRef      = useRef(null);
+  const modelButtonRef      = useRef(null);
+  const textareaRef         = useRef(null);
 
   const {
     setActiveChatId, setStreaming, appendStreamingContent, appendStreamingThinking,
@@ -143,14 +151,14 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   const queryClient = useQueryClient();
   const { data: conversationData, isLoading: loadingMessages } = useConversationMessages(initialChatId);
 
-  const dbMessages = conversationData?.messages || [];
-  const activeModelId = selectedModel.id || conversationData?.conversation?.modelId;
+  const dbMessages      = conversationData?.messages || [];
+  const activeModelId   = selectedModel.id || conversationData?.conversation?.modelId;
   const activeModelName = selectedModel.id
     ? selectedModel.name
     : (conversationData?.conversation?.modelName || t.selectModel);
 
   const isThisStreaming = isStreaming && streamingConversationId === initialChatId;
-  const allMessages = optimisticMessage ? [...dbMessages, optimisticMessage] : dbMessages;
+  const allMessages     = optimisticMessage ? [...dbMessages, optimisticMessage] : dbMessages;
 
   const checkIfAtBottom = useCallback(() => {
     const el = messagesContainerRef.current;
@@ -174,51 +182,35 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   useEffect(() => {
     isAtBottomRef.current = true;
     setShowScrollBtn(false);
-    const el = messagesContainerRef.current;
-    if (el) el.scrollTop = 0;
   }, [initialChatId]);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-
     const onScroll = () => {
       const atBottom = checkIfAtBottom();
       isAtBottomRef.current = atBottom;
       setShowScrollBtn(!atBottom);
     };
-
     const onWheel = (e) => {
-      if (e.deltaY < 0) {
-        isAtBottomRef.current = false;
-        setShowScrollBtn(true);
-      }
+      if (isEditingMessage) return;
+      if (e.deltaY < 0) { isAtBottomRef.current = false; setShowScrollBtn(true); }
     };
-
     let touchStartY = 0;
-
-    const onTouchStart = (e) => {
+    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY; };
+    const onTouchMove  = (e) => {
+      if (e.touches[0].clientY > touchStartY) { isAtBottomRef.current = false; setShowScrollBtn(true); }
       touchStartY = e.touches[0].clientY;
     };
-
-    const onTouchMove = (e) => {
-      if (e.touches[0].clientY > touchStartY) {
-        isAtBottomRef.current = false;
-        setShowScrollBtn(true);
-      }
-      touchStartY = e.touches[0].clientY;
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("scroll",     onScroll,     { passive: true });
+    el.addEventListener("wheel",      onWheel,      { passive: true });
     el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: true });
-
+    el.addEventListener("touchmove",  onTouchMove,  { passive: true });
     return () => {
-      el.removeEventListener("scroll", onScroll);
-      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("scroll",     onScroll);
+      el.removeEventListener("wheel",      onWheel);
       el.removeEventListener("touchstart", onTouchStart);
-      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchmove",  onTouchMove);
     };
   }, [checkIfAtBottom]);
 
@@ -226,8 +218,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     if (isAtBottomRef.current) {
       const el = messagesContainerRef.current;
       if (!el) return;
-      const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-      if (distFromBottom < 40) el.scrollTop = el.scrollHeight;
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) el.scrollTop = el.scrollHeight;
     }
   }, [streamingContent, streamingThinking]); // eslint-disable-line
 
@@ -245,6 +236,20 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
   }, [loadingMessages, initialChatId]); // eslint-disable-line
 
   useEffect(() => { if (initialChatId) setActiveChatId(initialChatId); }, [initialChatId, setActiveChatId]);
+
+  // ← ADD THIS RIGHT HERE
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    if (isEditingMessage) {
+      el.style.overflowY = "hidden";
+    } else {
+      el.style.overflowY = "auto";
+    }
+    return () => {
+      el.style.overflowY = "auto";
+    };
+  }, [isEditingMessage]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -274,19 +279,13 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         throw new Error(errText || "Failed to get response");
       }
     }
-    const reader = res.body.getReader();
+    const reader  = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
-      // If user stopped, cancel the reader and break cleanly
-      if (!useChatStore.getState().isStreaming) {
-        await reader.cancel();
-        break;
-      }
-
+      if (!useChatStore.getState().isStreaming) { await reader.cancel(); break; }
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
@@ -334,7 +333,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     }
     setRaceQuery(input.trim());
     setInput("");
-    clearFiles(); // ← clear files after submit
+    clearFiles();
   };
 
   const handleRaceSelect = useCallback(async (chosenResponse, chosenModel) => {
@@ -346,7 +345,6 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
       await streamResponse({ content: queryText, previousMessages, modelId: activeModelId, modelName: chosenModel?.label || activeModelName, overrideResponse: chosenResponse });
     } catch (err) {
       toast.error(err.message || "Failed to send response");
-      console.error(err);
     } finally {
       setOptimisticMessage(null);
       stopStreaming();
@@ -361,14 +359,15 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
       await streamResponse({ content: queryText, previousMessages, modelId: activeModelId, modelName: activeModelName });
     } catch (err) {
       toast.error(err.message || "Failed to get AI response");
-      console.error(err);
     } finally {
       setOptimisticMessage(null);
       stopStreaming();
     }
   }, [isThisStreaming, dbMessages, activeModelId, activeModelName, streamResponse, stopStreaming]);
 
+  // ── CHANGE 2: reset isEditingMessage when edit is saved ──────────────────
   const handleEditMessage = useCallback(async (messageId, newContent) => {
+    setIsEditingMessage(false);
     if (isThisStreaming) { toast.error("Please wait for the current response to finish."); return; }
     try {
       const patchRes = await fetch(`/api/messages/${messageId}`, {
@@ -376,7 +375,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         body: JSON.stringify({ content: newContent }),
       });
       if (!patchRes.ok) throw new Error(`Save edit failed (${patchRes.status}): ${await patchRes.text()}`);
-      const editedIndex = dbMessages.findIndex(m => m.id === messageId);
+      const editedIndex    = dbMessages.findIndex(m => m.id === messageId);
       const previousMessages = dbMessages.slice(0, editedIndex).map(m => ({ role: m.role, content: m.content }));
       const trimRes = await fetch(`/api/messages/trim`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -387,7 +386,6 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
       await streamResponse({ content: newContent, previousMessages, modelId: activeModelId, modelName: activeModelName, skipSaveUserMessage: true });
     } catch (err) {
       toast.error(err.message || "Failed to edit message");
-      console.error("[handleEditMessage]", err);
     } finally { stopStreaming(); }
   }, [isThisStreaming, initialChatId, dbMessages, queryClient, streamResponse, activeModelId, activeModelName, stopStreaming]);
 
@@ -395,9 +393,9 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
     if (isThisStreaming) { toast.error("Please wait for the current response to finish."); return; }
     setRefreshingMessageId(messageId);
     try {
-      const targetIndex = dbMessages.findIndex(m => m.id === messageId);
+      const targetIndex   = dbMessages.findIndex(m => m.id === messageId);
       const targetMessage = dbMessages[targetIndex];
-      if (!targetMessage) throw new Error("Message not found in current messages");
+      if (!targetMessage) throw new Error("Message not found");
       const previousMessages = dbMessages.slice(0, targetIndex).map(m => ({ role: m.role, content: m.content }));
       const trimRes = await fetch(`/api/messages/trim`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -408,7 +406,6 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
       await streamResponse({ content: targetMessage.content, previousMessages, modelId: activeModelId, modelName: activeModelName, skipSaveUserMessage: true });
     } catch (err) {
       toast.error(err.message || "Failed to retry message");
-      console.error("[handleRefreshMessage]", err);
     } finally { setRefreshingMessageId(null); stopStreaming(); }
   }, [isThisStreaming, initialChatId, dbMessages, queryClient, streamResponse, activeModelId, activeModelName, stopStreaming]);
 
@@ -434,6 +431,37 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
 
   const formatMessageTime = (date) => format(new Date(date), "MMM d, h:mm a");
 
+  // ── All tokens from getDarkTokens (theme-context) ────────────────────────
+  const pageBg          = isDark ? "#1A1A1A"           : "#EBEBEB";
+  const frostBg         = isDark ? dk.frostBg         : "rgba(255,255,255,0.62)";
+  const msgText         = isDark ? dk.messageText      : "rgba(0,0,0,0.78)";
+  const timestampText   = isDark ? dk.timestampText    : "rgba(0,0,0,0.28)";
+  const avatarUserBg    = isDark ? dk.userAvatarBg     : "rgba(255,255,255,0.72)";
+  const avatarBotBg     = isDark ? dk.botAvatarBg      : "rgba(255,255,255,0.55)";
+  const avatarBorder    = isDark ? dk.avatarBorder     : "rgba(255,255,255,0.90)";
+  const avatarIconColor = isDark ? "rgba(255,255,255,0.50)" : "rgba(0,0,0,0.50)";
+  const emptyTextColor  = isDark ? "rgba(255,255,255,0.28)"  : "rgba(0,0,0,0.32)";
+  const spinnerTrack    = isDark ? dk.spinnerBorder    : "rgba(0,0,0,0.10)";
+  const spinnerHead     = isDark ? dk.spinnerTop       : "rgba(0,0,0,0.45)";
+  const scrollBtnBg     = isDark ? dk.scrollBtnBg      : "rgba(255,255,255,0.88)";
+  const scrollBtnBorder = isDark ? dk.scrollBtnBorder  : "rgba(255,255,255,0.95)";
+  const scrollBtnIcon   = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)";
+  const inputBg         = isDark ? dk.inputBg          : "rgba(255,255,255,0.75)";
+  const inputBorder     = isDark ? dk.inputBorder      : "rgba(255,255,255,0.92)";
+  const inputShadow     = isDark ? dk.inputShadow
+    : "0 8px 32px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,1)";
+  const inputText       = isDark ? dk.inputText        : "rgba(0,0,0,0.82)";
+  const gradientFade    = isDark ? dk.gradientFade
+    : "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.55) 60%)";
+  const modelBtnBg      = isDark ? dk.modelBtnBg       : "rgba(255,255,255,0.65)";
+  const modelBtnBorder  = isDark ? dk.modelBtnBorder   : "rgba(255,255,255,0.88)";
+  const modelBtnHoverBg = isDark ? dk.modelBtnHoverBg  : "rgba(255,255,255,0.90)";
+  const modelBtnText    = isDark ? dk.modelBtnText      : "rgba(0,0,0,0.72)";
+  const dotsBg          = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)";
+  const disclaimerText  = isDark ? dk.disclaimerText   : "rgba(0,0,0,0.22)";
+  const scrollThumb     = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.45)";
+  const scrollThumbHov  = isDark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.65)";
+
   return (
     <div
       style={{
@@ -442,48 +470,55 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
         position: "relative",
         fontFamily: "'Inter', -apple-system, sans-serif",
         WebkitFontSmoothing: "antialiased",
-        background: "#EBEBEB",
+        background: pageBg,
       }}
     >
-      <style>{`
+      <DarkModeStyles isDark={isDark} />
+
+      <style key={isDark ? "cv-dark" : "cv-light"}>{`
         html, body, #__next { height: 100%; overflow: hidden !important; }
-        .cv-bg-a { position:absolute; inset:0; z-index:0; background:#EBEBEB; }
-        .cv-bg-b { position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; }
-        .cv-bg-c {
-          position:absolute; inset:0; z-index:2;
-          background:rgba(255,255,255,0.62);
-          backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px);
-        }
         .cv-scroll::-webkit-scrollbar { width: 4px; }
         .cv-scroll::-webkit-scrollbar-track { background: transparent; }
-        .cv-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.45); border-radius: 99px; }
-        .cv-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.65); }
-        .cv-scroll { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.45) transparent; }
+        .cv-scroll::-webkit-scrollbar-thumb { background: ${scrollThumb}; border-radius: 99px; }
+        .cv-scroll::-webkit-scrollbar-thumb:hover { background: ${scrollThumbHov}; }
+        .cv-scroll { scrollbar-width: thin; scrollbar-color: ${scrollThumb} transparent; }
+        .cv-input-wrap { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
         .cv-input-wrap:focus-within {
-          box-shadow: 0 0 0 2px rgba(59,158,255,0.22), 0 0 0 6px rgba(59,158,255,0.06),
-            0 20px 56px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
-          border-color: rgba(59,158,255,0.35) !important;
+          box-shadow: 0 0 0 2px rgba(255,255,255,${isDark ? "0.18" : "0"}),
+            0 0 0 6px rgba(255,255,255,${isDark ? "0.05" : "0"}),
+            ${isDark ? "0 20px 56px rgba(0,0,0,0.20)" : "0 20px 56px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)"} !important;
+          border-color: ${isDark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.98)"} !important;
         }
-        .cv-input-wrap textarea::placeholder { color: rgba(0,0,0,0.32); }
+        .cv-input-wrap textarea::placeholder { color: ${isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.32)"}; }
+        .cv-mbtn { transition: background 0.14s, border-color 0.14s; cursor: pointer; }
+        .cv-mbtn:hover:not(:disabled) {
+          background: ${modelBtnHoverBg} !important;
+          border-color: ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.09)"} !important;
+        }
+        .cv-scroll-btn { transition: transform 0.14s, background 0.14s; }
+        .cv-scroll-btn:hover { transform: scale(1.08); background: ${isDark ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.96)"} !important; }
       `}</style>
 
-      {/* ── Background layers ── */}
-      <div className="cv-bg-a" aria-hidden="true" />
-      <div className="cv-bg-b" aria-hidden="true">
-        <div style={{ position:"absolute", top:"-20%", left:"-15%", width:"60%", height:"65%", borderRadius:"50%", background:"rgba(199,210,254,0.18)", filter:"blur(100px)" }} />
-        <div style={{ position:"absolute", top:"-15%", right:"-15%", width:"55%", height:"60%", borderRadius:"50%", background:"rgba(186,230,253,0.15)", filter:"blur(110px)" }} />
-        <div style={{ position:"absolute", bottom:"-10%", left:"-10%", width:"50%", height:"55%", borderRadius:"50%", background:"rgba(221,214,254,0.14)", filter:"blur(105px)" }} />
-        <div style={{ position:"absolute", bottom:"-10%", right:"-10%", width:"50%", height:"55%", borderRadius:"50%", background:"rgba(253,213,200,0.12)", filter:"blur(105px)" }} />
+      {/* Background layers */}
+      <div aria-hidden="true" style={{ position:"absolute", inset:0, zIndex:0, background: pageBg }} />
+      <div aria-hidden="true" style={{ position:"absolute", inset:0, zIndex:1, overflow:"hidden", pointerEvents:"none" }}>
+        {!isDark && <>
+          <div style={{ position:"absolute", top:"-20%", left:"-15%", width:"60%", height:"65%", borderRadius:"50%", background:"rgba(199,210,254,0.18)", filter:"blur(100px)" }} />
+          <div style={{ position:"absolute", top:"-15%", right:"-15%", width:"55%", height:"60%", borderRadius:"50%", background:"rgba(186,230,253,0.15)", filter:"blur(110px)" }} />
+          <div style={{ position:"absolute", bottom:"-10%", left:"-10%", width:"50%", height:"55%", borderRadius:"50%", background:"rgba(221,214,254,0.14)", filter:"blur(105px)" }} />
+          <div style={{ position:"absolute", bottom:"-10%", right:"-10%", width:"50%", height:"55%", borderRadius:"50%", background:"rgba(253,213,200,0.12)", filter:"blur(105px)" }} />
+        </>}
       </div>
-      <div className="cv-bg-c" aria-hidden="true" />
+      <div aria-hidden="true" style={{
+        position:"absolute", inset:0, zIndex:2,
+        background: isDark ? "transparent" : "rgba(255,255,255,0.62)",
+        backdropFilter: isDark ? "none" : "blur(40px)",
+        WebkitBackdropFilter: isDark ? "none" : "blur(40px)",
+      }} />
 
-      {/* ── Messages + Floating Input ── */}
+      {/* Messages + Floating Input */}
       <div style={{ position: "relative", flex: 1, minHeight: 0, zIndex: 10 }}>
-        <div
-          ref={messagesContainerRef}
-          className="cv-scroll"
-          style={{ height: "100%", overflowY: "auto", overflowX: "hidden" }}
-        >
+        <div ref={messagesContainerRef} className="cv-scroll" style={{ height: "100%", overflowY: "auto", overflowX: "hidden" }}>
           <div style={{ width: "100%", padding: "24px 16px 360px" }}>
 
             <MessageSectionRefresh onRefresh={handleRefreshSection} isRefreshing={isSectionRefreshing} />
@@ -497,19 +532,19 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                     transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
                     style={{
                       width: 22, height: 22,
-                      border: "2px solid rgba(0,0,0,0.1)",
-                      borderTopColor: "rgba(0,0,0,0.45)",
+                      border: `2px solid ${spinnerTrack}`,
+                      borderTopColor: spinnerHead,
                       borderRadius: "50%",
                     }}
                   />
-                  <p style={{ fontSize: 12, color: "rgba(0,0,0,0.35)", fontFamily: "'Inter', sans-serif", margin: 0 }}>
+                  <p style={{ fontSize: 12, color: emptyTextColor, fontFamily: "'Inter', sans-serif", margin: 0 }}>
                     Loading messages...
                   </p>
                 </div>
               </div>
             ) : allMessages.length === 0 && !isThisStreaming ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
-                <p style={{ fontSize: 13.5, color: "rgba(0,0,0,0.32)", fontFamily: "'Inter', sans-serif" }}>
+                <p style={{ fontSize: 13.5, color: emptyTextColor, fontFamily: "'Inter', sans-serif" }}>
                   {t.noChatsYet}
                 </p>
               </div>
@@ -528,35 +563,34 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                       <div style={{
                         width: 28, height: 28, borderRadius: "50%",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        background: msg.role === "user"
-                          ? "rgba(255,255,255,0.72)"
-                          : "rgba(255,255,255,0.55)",
-                        border: "1px solid rgba(255,255,255,0.90)",
-                        boxShadow: "0 1px 6px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,1)",
+                        background: msg.role === "user" ? avatarUserBg : avatarBotBg,
+                        border: `1px solid ${avatarBorder}`,
+                        boxShadow: isDark ? "none" : "0 1px 6px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,1)",
                       }}>
                         {msg.role === "user"
-                          ? <User style={{ width: 13, height: 13, color: "rgba(0,0,0,0.55)" }} />
-                          : <Bot style={{ width: 13, height: 13, color: "rgba(0,0,0,0.45)" }} />
+                          ? <User  style={{ width: 13, height: 13, color: avatarIconColor }} />
+                          : <Bot   style={{ width: 13, height: 13, color: avatarIconColor }} />
                         }
                       </div>
                     </div>
 
                     {/* User message */}
                     {msg.role === "user" ? (
+                      // ── CHANGE 3: pass onEditStart / onEditEnd callbacks ──
                       <UserMessage
                         message={msg}
                         onEdit={handleEditMessage}
                         onRefresh={handleRefreshMessage}
                         isRefreshing={refreshingMessageId === msg.id}
+                        onEditStart={() => setIsEditingMessage(true)}
+                        onEditEnd={() => setIsEditingMessage(false)}
                       />
                     ) : (
-                      <div style={{
-                        display: "flex", flexDirection: "column",
-                        minWidth: 0, flex: 1, alignItems: "flex-start",
-                      }}>
-                        {msg.thinking && <ThinkingBlock thinking={msg.thinking} isStreaming={false} />}
+                      <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1, alignItems: "flex-start" }}>
+                        {msg.thinking && <ThinkingBlock thinking={msg.thinking} isStreaming={false} isDark={isDark} />}
                         <div style={{
-                          fontSize: 14, lineHeight: 1.75, color: "rgba(0,0,0,0.78)",
+                          fontSize: 14, lineHeight: 1.75,
+                          color: msgText,
                           wordBreak: "break-word", maxWidth: "85%",
                           fontFamily: "'Inter', sans-serif",
                         }}>
@@ -564,7 +598,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                         </div>
                         {msg.createdAt && (
                           <span style={{
-                            fontSize: 10.5, color: "rgba(0,0,0,0.28)",
+                            fontSize: 10.5, color: timestampText,
                             marginTop: 4, paddingLeft: 4,
                             fontFamily: "'Inter', sans-serif",
                           }}>
@@ -586,24 +620,25 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                       <div style={{
                         width: 28, height: 28, borderRadius: "50%",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "rgba(255,255,255,0.55)",
-                        border: "1px solid rgba(255,255,255,0.90)",
-                        boxShadow: "0 1px 6px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,1)",
+                        background: avatarBotBg,
+                        border: `1px solid ${avatarBorder}`,
+                        boxShadow: isDark ? "none" : "0 1px 6px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,1)",
                       }}>
-                        <Bot style={{ width: 13, height: 13, color: "rgba(0,0,0,0.45)" }} />
+                        <Bot style={{ width: 13, height: 13, color: avatarIconColor }} />
                       </div>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-                      {streamingThinking && <ThinkingBlock thinking={streamingThinking} isStreaming={!streamingContent} />}
+                      {streamingThinking && <ThinkingBlock thinking={streamingThinking} isStreaming={!streamingContent} isDark={isDark} />}
                       <div style={{
-                        fontSize: 14, lineHeight: 1.75, color: "rgba(0,0,0,0.78)",
+                        fontSize: 14, lineHeight: 1.75,
+                        color: msgText,
                         wordBreak: "break-word", maxWidth: "85%",
                         fontFamily: "'Inter', sans-serif",
                       }}>
                         {streamingContent ? (
                           <div style={{ wordBreak: "break-word" }}>
                             <MarkdownRenderer content={streamingContent} />
-                            <BlinkingCursor />
+                            <BlinkingCursor isDark={isDark} />
                           </div>
                         ) : (
                           <div style={{ display: "flex", gap: 6, alignItems: "center", height: 20 }}>
@@ -611,7 +646,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                               <motion.div key={i}
                                 animate={{ y: [0, -4, 0] }}
                                 transition={{ duration: 0.6, repeat: Infinity, delay, ease: "easeInOut" }}
-                                style={{ width: 6, height: 6, background: "rgba(0,0,0,0.25)", borderRadius: "50%" }}
+                                style={{ width: 6, height: 6, background: dotsBg, borderRadius: "50%" }}
                               />
                             ))}
                           </div>
@@ -628,7 +663,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
 
         {/* Scroll-to-bottom button */}
         <AnimatePresence>
-          {showScrollBtn && (
+          {showScrollBtn && !isEditingMessage && (
             <motion.div
               initial={{ opacity: 0, scale: 0.85, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -638,31 +673,36 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
             >
               <button
                 onClick={snapToBottom}
+                className="cv-scroll-btn"
                 style={{
                   width: 34, height: 34, borderRadius: "50%",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "none", cursor: "pointer",
-                  background: "rgba(255,255,255,0.88)",
+                  border: `1px solid ${scrollBtnBorder}`,
+                  cursor: "pointer",
+                  background: scrollBtnBg,
                   backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,0.95)",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,1)",
-                  transition: "transform 0.14s",
+                  boxShadow: isDark
+                    ? "0 4px 16px rgba(0,0,0,0.40)"
+                    : "0 4px 16px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,1)",
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
-                onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
               >
-                <ArrowDown style={{ width: 16, height: 16, color: "rgba(0,0,0,0.55)" }} />
+                <ArrowDown style={{ width: 16, height: 16, color: scrollBtnIcon }} />
               </button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Floating Input ── */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}>
+        {/* ── CHANGE 4: position fixed when editing so it can't scroll over edit box ── */}
+        <div style={{
+          position: "absolute",
+          bottom: 0, left: 0, right: 0,
+          zIndex: 10,
+        }}>
+          {/* Gradient fade */}
           <div style={{
             position: "absolute", insetInline: 0, top: -48, bottom: 0,
             pointerEvents: "none",
-            background: "linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.55) 60%)",
+            background: gradientFade,
           }} />
 
           <div style={{ position: "relative", maxWidth: 680, margin: "0 auto", padding: "0 16px 16px", paddingTop: 16 }}>
@@ -670,48 +710,39 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
               className="cv-input-wrap"
               style={{
                 position: "relative",
-                background: "rgba(255,255,255,0.75)",
+                background: inputBg,
                 backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)",
-                border: "1px solid rgba(255,255,255,0.92)",
+                border: `1px solid ${inputBorder}`,
                 borderRadius: 24,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,1)",
-                transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+                boxShadow: inputShadow,
               }}
             >
-              {/* ← ADD THIS LINE */}
               <FilePreviewStrip files={files} onFilesChange={setFiles} disabled={isThisStreaming} />
 
-              {/* ── Corrections bar ── */}
-              {/* <CorrectionsBar
+              <CorrectionsBar
                 corrections={corrections}
                 onAccept={acceptCorrection}
                 onDismiss={dismissCorrection}
                 isLoading={isLoadingCorrections}
-              /> */}
+              />
 
-              {/* ── Textarea with ghost suggestion ── */}
-              {/* {inlineSuggestion && (
+              {inlineSuggestion && (
                 <div
                   aria-hidden="true"
                   style={{
-                    position: "absolute",
-                    top: 0, left: 0, right: 0,
-                    pointerEvents: "none",
-                    padding: "18px 22px 10px",
-                    fontSize: 14, fontWeight: 400,
-                    lineHeight: 1.6,
+                    position: "absolute", top: 0, left: 0, right: 0,
+                    pointerEvents: "none", padding: "18px 22px 10px",
+                    fontSize: 14, fontWeight: 400, lineHeight: 1.6,
                     fontFamily: "'Inter', sans-serif",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    color: "transparent",
-                    zIndex: 1,
-                    boxSizing: "border-box",
+                    whiteSpace: "pre-wrap", wordBreak: "break-word",
+                    color: "transparent", zIndex: 1, boxSizing: "border-box",
                   }}
                 >
                   <span style={{ visibility: "hidden" }}>{input}</span>
-                  <span style={{ color: "rgba(0,0,0,0.28)" }}>{inlineSuggestion}</span>
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.28)" }}>{inlineSuggestion}</span>
                 </div>
-              )} */}
+              )}
+
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -726,9 +757,9 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                   padding: "18px 22px 10px",
                   background: "transparent", border: "none", outline: "none",
                   resize: "none", fontSize: 14, fontWeight: 400,
-                  lineHeight: 1.6, color: "rgba(0,0,0,0.82)",
+                  lineHeight: 1.6, color: inputText,
                   fontFamily: "'Inter', sans-serif",
-                  caretColor: "#3B9EFF",
+                  caretColor: isDark ? "#FFFFFF" : "#3B9EFF",
                   maxHeight: 160, overflowY: "auto", boxSizing: "border-box",
                   scrollbarWidth: "none",
                 }}
@@ -744,55 +775,40 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
               }}>
                 {/* Left tools */}
                 <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <FileUploadManager
-                    files={files}
-                    onFilesChange={setFiles}
-                    disabled={isThisStreaming}
-                  />
+                  <FileUploadManager files={files} onFilesChange={setFiles} disabled={isThisStreaming} />
                 </div>
 
                 {/* Right: model + send/stop */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-
                   <TabHint visible={!!inlineSuggestion} isLoading={isLoadingSuggestion} />
 
+                  {/* Model button */}
                   <button
                     type="button" ref={modelButtonRef}
                     onClick={() => setIsModelSelectorOpen(true)}
                     disabled={isThisStreaming}
+                    className="cv-mbtn"
                     style={{
                       display: "flex", alignItems: "center", gap: 5,
-                      padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer",
-                      background: "rgba(255,255,255,0.65)",
-                      backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-                      border: "1px solid rgba(255,255,255,0.88)",
-                      fontSize: 12, fontWeight: 500, color: "rgba(0,0,0,0.72)",
+                      padding: "6px 12px", borderRadius: 10,
+                      background: modelBtnBg,
+                      border: `1px solid ${modelBtnBorder}`,
+                      fontSize: 12, fontWeight: 500,
+                      color: modelBtnText,
                       fontFamily: "'Inter', sans-serif",
+                      cursor: "pointer",
                       opacity: isThisStreaming ? 0.35 : 1,
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,1)",
-                      transition: "background 0.14s, box-shadow 0.14s, border-color 0.14s",
+                      boxShadow: isDark ? "none" : "inset 0 1px 0 rgba(255,255,255,1)",
                       maxWidth: 140, overflow: "hidden",
-                    }}
-                    onMouseEnter={e => {
-                      if (!isThisStreaming) {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.90)";
-                        e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)";
-                        e.currentTarget.style.borderColor = "rgba(0,0,0,0.09)";
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.65)";
-                      e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,1)";
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.88)";
                     }}
                   >
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {activeModelName}
                     </span>
-                    <ChevronDown style={{ width: 11, height: 11, color: "rgba(0,0,0,0.45)", flexShrink: 0 }} strokeWidth={2.2} />
+                    <ChevronDown style={{ width: 11, height: 11, color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.45)", flexShrink: 0 }} strokeWidth={2.2} />
                   </button>
 
-                  {/* Send / Stop — animated swap */}
+                  {/* Send / Stop */}
                   <AnimatePresence mode="wait">
                     {isThisStreaming ? (
                       <StopButton key="stop" onStop={handleStop} />
@@ -813,7 +829,7 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                             display: "flex", alignItems: "center", justifyContent: "center",
                             background: input.trim()
                               ? "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)"
-                              : "rgba(0,0,0,0.07)",
+                              : (isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"),
                             opacity: input.trim() ? 1 : 0.35,
                             boxShadow: input.trim()
                               ? "0 6px 22px rgba(59,158,255,0.45), 0 2px 6px rgba(59,158,255,0.2), inset 0 1px 0 rgba(255,255,255,0.3)"
@@ -844,9 +860,10 @@ export default function ChatView({ initialChatId, pendingMessage, pendingModelId
                 </div>
               </div>
             </div>
+
             <p style={{
               textAlign: "center", marginTop: 8,
-              fontSize: 11, color: "rgba(0,0,0,0.22)",
+              fontSize: 11, color: disclaimerText,
               letterSpacing: "0.03em", fontFamily: "'Inter', sans-serif",
             }}>
               {t.disclaimer}

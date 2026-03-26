@@ -16,6 +16,7 @@ export default function ChatViewWrapper() {
       pointerEvents: activeChatId ? "auto" : "none",
       transition: "opacity 0.15s ease",
       zIndex: activeChatId ? 1 : -1,
+      background: "var(--page-bg)",   // ← add this one line
     }}>
       {activeChatId && (
         <ChatView

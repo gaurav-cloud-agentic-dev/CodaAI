@@ -3,13 +3,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, createContext, useContext } from "react";
 import { Globe, X, Check } from "lucide-react";
+import { useTheme } from "./theme-context";
 
 export const LANGUAGES = [
-  { code: "en-us", label: "English (American)", flag: "🇺🇸", native: "English" },
-  { code: "en-uk", label: "English (UK)",        flag: "🇬🇧", native: "English" },
-  { code: "hi",    label: "Hindi",               flag: "🇮🇳", native: "हिन्दी"  },
-  { code: "bn",    label: "Bengali",             flag: "🇧🇩", native: "বাংলা"   },
-  { code: "mr",    label: "Marathi",             flag: "🇮🇳", native: "मराठी"   },
+  { code: "en-us", label: "English (American)", native: "English",  abbr: "US" },
+  { code: "en-uk", label: "English (UK)",        native: "English",  abbr: "GB" },
+  { code: "hi",    label: "Hindi",               native: "हिन्दी",   abbr: "IN" },
+  { code: "bn",    label: "Bengali",             native: "বাংলা",    abbr: "BD" },
+  { code: "mr",    label: "Marathi",             native: "मराठी",    abbr: "IN" },
 ];
 
 export const UI_STRINGS = {
@@ -27,8 +28,8 @@ export const UI_STRINGS = {
     shareConversation: "Share Conversation", shareDesc: "Anyone with the link will be able to view this conversation.",
     copyShareLink: "Copy Share Link", createProject: "Create a personal project",
     howToUseProjects: "How to use projects",
-    projectDesc1: "Projects help organize your work and leverage knowledge across multiple conversations. Upload docs, code, and files to create themed collections that Claude can reference again and again.",
-    projectDesc2: "Start by creating a memorable title and description to organize your project. You can always edit it later.",
+    projectDesc1: "Projects help organize your work and leverage knowledge across multiple conversations.",
+    projectDesc2: "Start by creating a memorable title and description to organize your project.",
     whatAreYouWorkingOn: "What are you working on?", nameYourProject: "Name your project",
     whatAreYouTryingToAchieve: "What are you trying to achieve?",
     describeYourProject: "Describe your project, goals, subject, etc...",
@@ -63,7 +64,7 @@ export const UI_STRINGS = {
     recent: "हाल का", settings: "सेटिंग्स", language: "भाषा",
     getHelp: "सहायता लें", upgradePlan: "अपग्रेड करें", logout: "लॉग आउट",
     freePlan: "मुफ़्त प्लान", upgrade: "अपग्रेड", placeholder: "अपना संदेश लिखें...",
-    selectModel: "मॉडेल चुनें", disclaimer: "CodaAI गलतियाँ कर सकता है। महत्वपूर्ण जानकारी की जाँच करें।",
+    selectModel: "मॉडेल चुनें", disclaimer: "CodaAI गलतियाँ कर सकता है।",
     pinned: "पिन किया गया", pin: "पिन करें", unpin: "अनपिन करें", share: "शेयर करें",
     star: "स्टार करें", rename: "नाम बदलें", addToProject: "प्रोजेक्ट में जोड़ें",
     delete: "हटाएं", deleteChat: "चैट हटाएं?", deleteChatConfirm: "क्या आप वाकई हटाना चाहते हैं",
@@ -76,7 +77,7 @@ export const UI_STRINGS = {
     whatAreYouWorkingOn: "आप किस पर काम कर रहे हैं?", nameYourProject: "अपने प्रोजेक्ट का नाम दें",
     whatAreYouTryingToAchieve: "आप क्या हासिल करने की कोशिश कर रहे हैं?",
     describeYourProject: "अपने प्रोजेक्ट, लक्ष्य, विषय आदि का वर्णन करें...",
-    createProjectBtn: "प्रोजेक्ट बनाएं", noChatsYet: "अभी तक कोई चैट नहीं। नई बातचीत शुरू करें!",
+    createProjectBtn: "प्रोजेक्ट बनाएं", noChatsYet: "अभी तक कोई चैट नहीं।",
     noChatsFound: "कोई चैट नहीं मिली", searchChats: "चैट खोजें...",
   },
   bn: {
@@ -85,20 +86,20 @@ export const UI_STRINGS = {
     recent: "সাম্প্রতিক", settings: "সেটিংস", language: "ভাষা",
     getHelp: "সাহায্য নিন", upgradePlan: "আপগ্রেড করুন", logout: "লগ আউট",
     freePlan: "ফ্রি প্ল্যান", upgrade: "আপগ্রেড", placeholder: "আপনার বার্তা টাইপ করুন...",
-    selectModel: "মডেল নির্বাচন করুন", disclaimer: "CodaAI ভুল করতে পারে। গুরুত্বপূর্ণ তথ্য যাচাই করুন।",
+    selectModel: "মডেল নির্বাচন করুন", disclaimer: "CodaAI ভুল করতে পারে।",
     pinned: "পিন করা", pin: "পিন করুন", unpin: "আনপিন করুন", share: "শেয়ার করুন",
     star: "স্টার করুন", rename: "নাম পরিবর্তন করুন", addToProject: "প্রজেক্টে যোগ করুন",
     delete: "মুছুন", deleteChat: "চ্যাট মুছবেন?", deleteChatConfirm: "আপনি কি সত্যিই মুছতে চান",
     deleteCannotUndo: "এই ক্রিয়া পূর্বাবস্থায় ফেরানো যাবে না।", cancel: "বাতিল করুন", deleting: "মুছে ফেলা হচ্ছে...",
-    shareConversation: "কথোপকথন শেয়ার করুন", shareDesc: "লিংক সহ যে কেউ এই কথোপকথন দেখতে পারবে।",
-    copyShareLink: "শেয়ার লিংক কপি করুন", createProject: "একটি ব্যক্তিগত প্রজেক্ট তৈরি করুন",
+    shareConversation: "কথোপকথন শেয়ার করুন", shareDesc: "লিংক সহ যে কেউ দেখতে পারবে।",
+    copyShareLink: "শেয়ার লিংক কপি করুন", createProject: "একটি প্রজেক্ট তৈরি করুন",
     howToUseProjects: "প্রজেক্ট কীভাবে ব্যবহার করবেন",
     projectDesc1: "প্রজেক্ট আপনার কাজ সংগঠিত করতে সাহায্য করে।",
-    projectDesc2: "একটি স্মরণীয় শিরোনাম এবং বিবরণ তৈরি করে শুরু করুন।",
-    whatAreYouWorkingOn: "আপনি কিসে কাজ করছেন?", nameYourProject: "আপনার প্রজেক্টের নাম দিন",
+    projectDesc2: "একটি শিরোনাম এবং বিবরণ তৈরি করে শুরু করুন।",
+    whatAreYouWorkingOn: "আপনি কিসে কাজ করছেন?", nameYourProject: "প্রজেক্টের নাম দিন",
     whatAreYouTryingToAchieve: "আপনি কী অর্জন করতে চাইছেন?",
-    describeYourProject: "আপনার প্রজেক্ট, লক্ষ্য, বিষয় ইত্যাদি বর্ণনা করুন...",
-    createProjectBtn: "প্রজেক্ট তৈরি করুন", noChatsYet: "এখনো কোনো চ্যাট নেই। নতুন কথোপকথন শুরু করুন!",
+    describeYourProject: "আপনার প্রজেক্ট বর্ণনা করুন...",
+    createProjectBtn: "প্রজেক্ট তৈরি করুন", noChatsYet: "এখনো কোনো চ্যাট নেই।",
     noChatsFound: "কোনো চ্যাট পাওয়া যায়নি", searchChats: "চ্যাট খুঁজুন...",
   },
   mr: {
@@ -107,25 +108,24 @@ export const UI_STRINGS = {
     recent: "अलीकडील", settings: "सेटिंग्ज", language: "भाषा",
     getHelp: "मदत मिळवा", upgradePlan: "अपग्रेड करा", logout: "लॉग आउट",
     freePlan: "मोफत प्लान", upgrade: "अपग्रेड", placeholder: "तुमचा संदेश लिहा...",
-    selectModel: "मॉडेल निवडा", disclaimer: "CodaAI चुका करू शकतो. महत्त्वाची माहिती तपासा.",
+    selectModel: "मॉडेल निवडा", disclaimer: "CodaAI चुका करू शकतो.",
     pinned: "पिन केलेले", pin: "पिन करा", unpin: "अनपिन करा", share: "शेअर करा",
     star: "स्टार करा", rename: "नाव बदला", addToProject: "प्रोजेक्टमध्ये जोडा",
     delete: "हटवा", deleteChat: "चॅट हटवायची?", deleteChatConfirm: "तुम्हाला खरोखर हटवायचे आहे का",
     deleteCannotUndo: "ही क्रिया पूर्ववत करता येणार नाही.", cancel: "रद्द करा", deleting: "हटवले जात आहे...",
-    shareConversation: "संभाषण शेअर करा", shareDesc: "लिंक असलेला कोणीही हे संभाषण पाहू शकेल.",
-    copyShareLink: "शेअर लिंक कॉपी करा", createProject: "एक वैयक्तिक प्रोजेक्ट तयार करा",
+    shareConversation: "संभाषण शेअर करा", shareDesc: "लिंक असलेला कोणीही पाहू शकेल.",
+    copyShareLink: "शेअर लिंक कॉपी करा", createProject: "एक प्रोजेक्ट तयार करा",
     howToUseProjects: "प्रोजेक्ट कसे वापरावे",
     projectDesc1: "प्रोजेक्ट तुमचे काम व्यवस्थित करण्यात मदत करतात.",
-    projectDesc2: "एक संस्मरणीय शीर्षक आणि वर्णन तयार करून सुरुवात करा.",
-    whatAreYouWorkingOn: "तुम्ही काय काम करत आहात?", nameYourProject: "तुमच्या प्रोजेक्टला नाव द्या",
+    projectDesc2: "एक शीर्षक आणि वर्णन तयार करून सुरुवात करा.",
+    whatAreYouWorkingOn: "तुम्ही काय काम करत आहात?", nameYourProject: "प्रोजेक्टला नाव द्या",
     whatAreYouTryingToAchieve: "तुम्ही काय साध्य करण्याचा प्रयत्न करत आहात?",
-    describeYourProject: "तुमच्या प्रोजेक्टचे, ध्येयांचे, विषयाचे वर्णन करा...",
-    createProjectBtn: "प्रोजेक्ट तयार करा", noChatsYet: "अद्याप कोणतीही चॅट नाही. नवीन संभाषण सुरू करा!",
+    describeYourProject: "तुमच्या प्रोजेक्टचे वर्णन करा...",
+    createProjectBtn: "प्रोजेक्ट तयार करा", noChatsYet: "अद्याप कोणतीही चॅट नाही.",
     noChatsFound: "कोणतीही चॅट सापडली नाही", searchChats: "चॅट शोधा...",
   },
 };
 
-// ── Context — logic unchanged ─────────────────────────────────────────────────
 const LanguageContext = createContext(null);
 export const useLanguage = () => useContext(LanguageContext);
 
@@ -149,7 +149,6 @@ export const LanguageProvider = ({ children }) => {
     setActiveLanguageState(lang);
     try { localStorage.setItem("coda-language", lang.code); } catch (_) {}
   };
-
   const setResponseMode = (mode) => {
     setResponseModeState(mode);
     try { localStorage.setItem("coda-response-mode", mode); } catch (_) {}
@@ -164,19 +163,98 @@ export const LanguageProvider = ({ children }) => {
   );
 };
 
-// ── LanguageSettings modal ────────────────────────────────────────────────────
+// ── Language Card ─────────────────────────────────────────────────────────────
+function LangCard({ lang, isSelected, onSelect, isDark }) {
+  const [hovered, setHovered] = useState(false);
+
+  const bg = isSelected
+    ? (isDark ? "#FFFFFF" : "rgba(255,255,255,0.95)")
+    : hovered
+      ? (isDark ? "#FFFFFF" : "rgba(255,255,255,0.85)")
+      : (isDark ? "#252525" : "rgba(255,255,255,0.60)");
+
+  // Always 2px border — only color changes, so card size never shifts
+  const borderColor = isSelected
+    ? (isDark ? "#000000" : "rgba(0,0,0,0.75)")
+    : hovered
+      ? (isDark ? "rgba(0,0,0,0.80)" : "rgba(0,0,0,0.55)")
+      : (isDark ? "transparent" : "transparent");
+
+  const titleColor = (isDark && !isSelected && !hovered) ? "#FFFFFF" : "rgba(0,0,0,0.82)";
+  const subColor   = (isDark && !isSelected && !hovered) ? "rgba(255,255,255,0.50)" : "rgba(0,0,0,0.45)";
+  const abbrColor  = (isSelected || hovered)
+    ? (isDark ? "#000000" : "#000000")
+    : (isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.30)");
+
+  return (
+    <button
+      onClick={() => onSelect(lang)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "11px 14px", borderRadius: 12,
+        border: `2px solid ${borderColor}`,
+        background: bg,
+        cursor: "pointer", textAlign: "left",
+        transition: "background 0.18s ease, border-color 0.18s ease",
+        position: "relative",
+        boxShadow: "none",
+      }}
+    >
+      {/* Country abbr */}
+      <span style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+        color: abbrColor, flexShrink: 0, minWidth: 22,
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        {lang.abbr}
+      </span>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{
+          margin: 0, fontSize: 13, fontWeight: 600,
+          color: titleColor, fontFamily: "'Inter', sans-serif",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          transition: "color 0.15s",
+        }}>
+          {lang.label}
+        </p>
+        <p style={{
+          margin: "2px 0 0", fontSize: 11,
+          color: subColor, fontFamily: "'Inter', sans-serif",
+          transition: "color 0.15s",
+        }}>
+          {lang.native}
+        </p>
+      </div>
+
+      {/* Check */}
+      {isSelected && (
+        <div style={{
+          width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+          background: isDark ? "#1A1A1A" : "#1A1A1A",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.20)",
+        }}>
+          <Check style={{ width: 11, height: 11, color: "#FFFFFF" }} strokeWidth={3} />
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ── Main Modal ─────────────────────────────────────────────────────────────────
 const LanguageSettings = ({ isOpen, onClose }) => {
   const { activeLanguage, setActiveLanguage, responseMode, setResponseMode } = useLanguage();
+  const { isDark } = useTheme();
   const [pendingLanguage, setPendingLanguage] = useState(activeLanguage);
   const [pendingMode, setPendingMode] = useState(responseMode);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setPendingLanguage(activeLanguage);
-      setPendingMode(responseMode);
-      setSaved(false);
-    }
+    if (isOpen) { setPendingLanguage(activeLanguage); setPendingMode(responseMode); setSaved(false); }
   }, [isOpen, activeLanguage, responseMode]);
 
   const handleSave = () => {
@@ -185,6 +263,35 @@ const LanguageSettings = ({ isOpen, onClose }) => {
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 1400);
   };
+
+  // ── Light/dark tokens ────────────────────────────────────────────────────
+  const modalBg      = isDark ? "#1C1C1C" : "rgba(255,255,255,0.92)";
+  const modalBorder  = isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,255,255,0.95)";
+  const modalShadow  = isDark ? "0 32px 80px rgba(0,0,0,0.85)" : "0 24px 64px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,1)";
+  const headerBorder = isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.07)";
+  const titleColor   = isDark ? "#FFFFFF" : "rgba(0,0,0,0.82)";
+  const labelColor   = isDark ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.38)";
+  const sectionBg    = isDark ? "#242424" : "rgba(255,255,255,0.60)";
+  const sectionBorder = isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.06)";
+  const sectionTitle = isDark ? "#FFFFFF" : "rgba(0,0,0,0.78)";
+  const sectionSub   = isDark ? "rgba(255,255,255,0.42)" : "rgba(0,0,0,0.42)";
+  const optActiveBg  = isDark ? "#2E2E2E" : "rgba(255,255,255,0.85)";
+  const optActiveBorder = isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.10)";
+  const optHoverBg   = isDark ? "#242424" : "rgba(255,255,255,0.60)";
+  const radioActive  = isDark ? "#FFFFFF" : "#1A1A1A";
+  const radioInactive = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.22)";
+  const optText      = isDark ? "#FFFFFF" : "rgba(0,0,0,0.78)";
+  const optSub       = isDark ? "rgba(255,255,255,0.42)" : "rgba(0,0,0,0.42)";
+  const iconBg       = isDark ? "#282828" : "rgba(255,255,255,0.75)";
+  const iconBorder   = isDark ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(0,0,0,0.08)";
+  const closeBg      = isDark ? "#282828" : "rgba(0,0,0,0.06)";
+  const closeBorder  = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
+  const cancelBg     = isDark ? "#282828" : "rgba(0,0,0,0.06)";
+  const cancelText   = isDark ? "#FFFFFF" : "rgba(0,0,0,0.70)";
+  const cancelHover  = isDark ? "#333333" : "rgba(0,0,0,0.10)";
+  const saveBg       = isDark ? "#FFFFFF" : "#1A1A1A";
+  const saveText     = isDark ? "#1A1A1A" : "#FFFFFF";
+  const saveHover    = isDark ? "rgba(255,255,255,0.88)" : "#333333";
 
   return (
     <AnimatePresence>
@@ -198,56 +305,52 @@ const LanguageSettings = ({ isOpen, onClose }) => {
             onClick={onClose}
             style={{
               position: "fixed", inset: 0, zIndex: 50,
-              background: "rgba(0,0,0,0.22)",
-              backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+              background: isDark ? "rgba(0,0,0,0.82)" : "rgba(0,0,0,0.25)",
+              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             }}
           />
 
-          {/* Centering wrapper */}
+          {/* Modal wrapper */}
           <div style={{
             position: "fixed", inset: 0, zIndex: 51,
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: 16, pointerEvents: "none",
           }}>
-            {/* Animated modal */}
             <motion.div
               key="lang-modal"
-              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              transition={{ type: "tween", ease: [0.25, 0.46, 0.45, 0.94], duration: 0.22 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 380, damping: 32 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                width: "100%", maxWidth: 500,
-                pointerEvents: "auto",
-                borderRadius: 22, overflow: "hidden",
-                background: "rgba(255,255,255,0.88)",
-                backdropFilter: "blur(48px)", WebkitBackdropFilter: "blur(48px)",
-                border: "1px solid rgba(255,255,255,0.95)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
+                width: "100%", maxWidth: 480, pointerEvents: "auto",
+                borderRadius: 20, overflow: "hidden",
+                background: modalBg,
+                backdropFilter: isDark ? "none" : "blur(48px)",
+                WebkitBackdropFilter: isDark ? "none" : "blur(48px)",
+                border: modalBorder,
+                boxShadow: modalShadow,
                 fontFamily: "'Inter', -apple-system, sans-serif",
               }}
             >
               {/* ── Header ── */}
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "20px 24px 16px",
-                borderBottom: "1px solid rgba(0,0,0,0.07)",
-                background: "rgba(255,255,255,0.55)",
+                padding: "18px 22px 14px",
+                borderBottom: headerBorder,
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
                   <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: "rgba(255,255,255,0.72)",
-                    border: "1px solid rgba(255,255,255,0.92)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,1)",
+                    width: 34, height: 34, borderRadius: 9,
+                    background: iconBg, border: iconBorder,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    <Globe style={{ width: 17, height: 17, color: "rgba(0,0,0,0.55)" }} />
+                    <Globe style={{ width: 16, height: 16, color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.60)" }} />
                   </div>
                   <h2 style={{
-                    margin: 0, fontSize: 17, fontWeight: 700,
-                    color: "rgba(0,0,0,0.82)", letterSpacing: "-0.01em",
+                    margin: 0, fontSize: 16, fontWeight: 700,
+                    color: titleColor, letterSpacing: "-0.015em",
                   }}>
                     Language Settings
                   </h2>
@@ -255,107 +358,51 @@ const LanguageSettings = ({ isOpen, onClose }) => {
                 <button
                   onClick={onClose}
                   style={{
-                    width: 32, height: 32, borderRadius: 9, cursor: "pointer",
-                    background: "rgba(255,255,255,0.65)",
-                    border: "1px solid rgba(0,0,0,0.08)",
+                    width: 30, height: 30, borderRadius: 8, cursor: "pointer",
+                    background: closeBg, border: `1px solid ${closeBorder}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "background 0.14s",
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
+                  onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(239,68,68,0.20)" : "rgba(239,68,68,0.10)"}
+                  onMouseLeave={e => e.currentTarget.style.background = closeBg}
                 >
-                  <X style={{ width: 15, height: 15, color: "rgba(0,0,0,0.50)" }} />
+                  <X style={{ width: 14, height: 14, color: isDark ? "rgba(255,255,255,0.80)" : "rgba(0,0,0,0.55)" }} />
                 </button>
               </div>
 
               {/* ── Body ── */}
-              <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{ padding: "18px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
 
-                {/* Language section */}
-                <div>
-                  <p style={{
-                    margin: "0 0 10px", fontSize: 10, fontWeight: 700,
-                    color: "rgba(0,0,0,0.38)", textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                  }}>
-                    Choose your preferred language
-                  </p>
+                {/* Language label */}
+                <p style={{
+                  margin: 0, fontSize: 10, fontWeight: 700,
+                  color: labelColor, textTransform: "uppercase", letterSpacing: "0.12em",
+                }}>
+                  Choose your preferred language
+                </p>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    {LANGUAGES.map((lang) => {
-                      const isSelected = pendingLanguage.code === lang.code;
-                      return (
-                        <button
-                          key={lang.code}
-                          onClick={() => setPendingLanguage(lang)}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 10,
-                            padding: "10px 14px", borderRadius: 13,
-                            border: "none", cursor: "pointer", textAlign: "left",
-                            background: isSelected
-                              ? "rgba(255,255,255,0.95)"
-                              : "rgba(255,255,255,0.55)",
-                            outline: `1px solid ${isSelected ? "rgba(0,0,0,0.14)" : "rgba(255,255,255,0.82)"}`,
-                            boxShadow: isSelected
-                              ? "0 2px 12px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,1)"
-                              : "inset 0 1px 0 rgba(255,255,255,0.8)",
-                            transition: "background 0.14s, box-shadow 0.14s, outline-color 0.14s",
-                          }}
-                          onMouseEnter={e => {
-                            if (!isSelected) {
-                              e.currentTarget.style.background = "rgba(255,255,255,0.80)";
-                              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)";
-                              e.currentTarget.style.outlineColor = "rgba(0,0,0,0.09)";
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            if (!isSelected) {
-                              e.currentTarget.style.background = "rgba(255,255,255,0.55)";
-                              e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.8)";
-                              e.currentTarget.style.outlineColor = "rgba(255,255,255,0.82)";
-                            }
-                          }}
-                        >
-                          <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>{lang.flag}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{
-                              margin: 0, fontSize: 13, fontWeight: 600,
-                              color: "rgba(0,0,0,0.78)",
-                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                            }}>
-                              {lang.label}
-                            </p>
-                            <p style={{ margin: "2px 0 0", fontSize: 11, color: "rgba(0,0,0,0.38)" }}>
-                              {lang.native}
-                            </p>
-                          </div>
-                          {isSelected && (
-                            <div style={{
-                              width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
-                              background: "rgba(15,15,22,0.82)",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.18)",
-                            }}>
-                              <Check style={{ width: 10, height: 10, color: "#fff" }} strokeWidth={3} />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                {/* Language grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {LANGUAGES.map((lang) => (
+                    <LangCard
+                      key={lang.code}
+                      lang={lang}
+                      isSelected={pendingLanguage.code === lang.code}
+                      onSelect={setPendingLanguage}
+                      isDark={isDark}
+                    />
+                  ))}
                 </div>
 
-                {/* Response mode */}
+                {/* Response mode section */}
                 <div style={{
-                  padding: "14px 16px", borderRadius: 14,
-                  background: "rgba(255,255,255,0.55)",
-                  border: "1px solid rgba(255,255,255,0.82)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+                  padding: "14px 16px", borderRadius: 12,
+                  background: sectionBg, border: sectionBorder,
                 }}>
-                  <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.72)" }}>
+                  <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 600, color: sectionTitle }}>
                     AI Response Language
                   </p>
-                  <p style={{ margin: "0 0 12px", fontSize: 11.5, color: "rgba(0,0,0,0.38)" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: 11.5, color: sectionSub }}>
                     How should the AI decide which language to respond in?
                   </p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -370,42 +417,34 @@ const LanguageSettings = ({ isOpen, onClose }) => {
                           onClick={() => setPendingMode(opt.value)}
                           style={{
                             display: "flex", alignItems: "flex-start", gap: 10,
-                            padding: "10px 12px", borderRadius: 10,
+                            padding: "9px 11px", borderRadius: 9,
                             border: "none", cursor: "pointer", textAlign: "left",
-                            background: isActive ? "rgba(255,255,255,0.80)" : "transparent",
-                            outline: `1px solid ${isActive ? "rgba(0,0,0,0.09)" : "transparent"}`,
-                            boxShadow: isActive ? "0 1px 6px rgba(0,0,0,0.05)" : "none",
-                            transition: "background 0.14s, box-shadow 0.14s",
+                            background: isActive ? optActiveBg : "transparent",
+                            outline: `1px solid ${isActive ? optActiveBorder : "transparent"}`,
+                            transition: "background 0.14s",
                           }}
-                          onMouseEnter={e => {
-                            if (!isActive) {
-                              e.currentTarget.style.background = "rgba(255,255,255,0.65)";
-                              e.currentTarget.style.outlineColor = "rgba(0,0,0,0.06)";
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            if (!isActive) {
-                              e.currentTarget.style.background = "transparent";
-                              e.currentTarget.style.outlineColor = "transparent";
-                            }
-                          }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = optHoverBg; }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                         >
-                          {/* Radio */}
+                          {/* Radio circle */}
                           <div style={{
-                            marginTop: 2, width: 16, height: 16, borderRadius: "50%",
+                            marginTop: 2, width: 15, height: 15, borderRadius: "50%",
                             flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                            border: `2px solid ${isActive ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.20)"}`,
+                            border: `2px solid ${isActive ? radioActive : radioInactive}`,
                             transition: "border-color 0.14s",
                           }}>
                             {isActive && (
-                              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(0,0,0,0.65)" }} />
+                              <div style={{
+                                width: 6, height: 6, borderRadius: "50%",
+                                background: radioActive,
+                              }} />
                             )}
                           </div>
                           <div>
-                            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.72)" }}>
+                            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: optText }}>
                               {opt.label}
                             </p>
-                            <p style={{ margin: "2px 0 0", fontSize: 11, color: "rgba(0,0,0,0.38)" }}>
+                            <p style={{ margin: "1px 0 0", fontSize: 11, color: optSub }}>
                               {opt.desc}
                             </p>
                           </div>
@@ -419,58 +458,46 @@ const LanguageSettings = ({ isOpen, onClose }) => {
               {/* ── Footer ── */}
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "0 24px 22px",
+                padding: "4px 22px 20px",
               }}>
                 <AnimatePresence>
-                  {saved ? (
+                  {saved && (
                     <motion.div
                       initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
                       transition={{ duration: 0.18 }}
-                      style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: "#059669" }}
+                      style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: "#22C55E" }}
                     >
-                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22C55E" }} />
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }} />
                       Language updated!
                     </motion.div>
-                  ) : <div />}
+                  )}
+                  {!saved && <div />}
                 </AnimatePresence>
 
-                <div style={{ display: "flex", gap: 10 }}>
-                  {/* Cancel */}
+                <div style={{ display: "flex", gap: 8 }}>
                   <button
                     onClick={onClose}
                     style={{
                       padding: "9px 18px", borderRadius: 10, border: "none", cursor: "pointer",
-                      background: "rgba(255,255,255,0.65)",
-                      outline: "1px solid rgba(0,0,0,0.09)",
-                      fontSize: 13, fontWeight: 500, color: "rgba(0,0,0,0.65)",
-                      fontFamily: "'Inter', sans-serif",
-                      transition: "background 0.14s",
+                      background: cancelBg, fontSize: 13, fontWeight: 500, color: cancelText,
+                      fontFamily: "'Inter', sans-serif", transition: "background 0.14s",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.90)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
+                    onMouseEnter={e => e.currentTarget.style.background = cancelHover}
+                    onMouseLeave={e => e.currentTarget.style.background = cancelBg}
                   >
                     Cancel
                   </button>
-
-                  {/* Save */}
                   <button
                     onClick={handleSave}
                     style={{
                       padding: "9px 20px", borderRadius: 10, border: "none", cursor: "pointer",
-                      background: "rgba(15,15,22,0.85)",
-                      fontSize: 13, fontWeight: 600, color: "#fff",
+                      background: saveBg, fontSize: 13, fontWeight: 600, color: saveText,
                       fontFamily: "'Inter', sans-serif",
-                      boxShadow: "0 4px 14px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.08)",
-                      transition: "background 0.14s, box-shadow 0.14s",
+                      boxShadow: isDark ? "none" : "0 4px 14px rgba(0,0,0,0.18)",
+                      transition: "background 0.14s",
                     }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = "rgba(15,15,22,0.92)";
-                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08)";
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = "rgba(15,15,22,0.85)";
-                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.08)";
-                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = saveHover}
+                    onMouseLeave={e => e.currentTarget.style.background = saveBg}
                   >
                     Save Changes
                   </button>

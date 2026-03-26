@@ -6,31 +6,7 @@ import {
   X, Send, Mic, Plus, ChevronDown, LayoutGrid,
   Check, Trophy, Zap, Brain, Copy, RotateCcw,
 } from "lucide-react";
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const COMPARE_CSS = `
-  .cv-scroll::-webkit-scrollbar { width: 3px; }
-  .cv-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 99px; }
-  .cv-scroll { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }
-
-  .cv-card-enter { animation: cv-rise 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
-  @keyframes cv-rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-  .cv-typing span {
-    display:inline-block; width:5px; height:5px; border-radius:50%;
-    background:rgba(0,0,0,0.28); margin:0 2px;
-    animation: cv-bounce 1s ease infinite;
-  }
-  .cv-typing span:nth-child(2) { animation-delay:.15s; }
-  .cv-typing span:nth-child(3) { animation-delay:.30s; }
-  @keyframes cv-bounce { 0%,80%,100%{transform:translateY(0);opacity:.5} 40%{transform:translateY(-5px);opacity:1} }
-
-  .cv-rank-1 {
-    background: rgba(255,255,255,0.88) !important;
-    border-color: rgba(59,158,255,0.28) !important;
-    box-shadow: 0 0 0 1px rgba(59,158,255,0.12), 0 4px 24px rgba(0,0,0,0.08) !important;
-  }
-`;
+import { useTheme, DarkModeStyles } from "./theme-context";
 
 // ─── Model definitions — logic unchanged ─────────────────────────────────────
 const COMPARE_MODELS = [
@@ -76,35 +52,59 @@ function useCopy() {
 }
 
 // ─── Single response panel ────────────────────────────────────────────────────
-function ResponsePanel({ model, response, rank, isLoading, query }) {
+function ResponsePanel({ model, response, rank, isLoading, query, isDark }) {
   const { copied, copy } = useCopy();
-  const scores  = response ? getScores(model.id, query) : null;
-  const total   = scores ? totalScore(scores) : null;
+  const scores   = response ? getScores(model.id, query) : null;
+  const total    = scores ? totalScore(scores) : null;
   const isWinner = rank === 1;
+
+  // ── Dark-aware panel tokens ──────────────────────────────────────────────
+  const panelBg     = isWinner
+    ? (isDark ? "rgba(54,54,58,0.95)"   : "rgba(255,255,255,0.88)")
+    : (isDark ? "rgba(44,44,46,0.85)"   : "rgba(255,255,255,0.65)");
+  const panelBorder = isWinner
+    ? (isDark ? "rgba(59,158,255,0.35)" : "rgba(59,158,255,0.28)")
+    : (isDark ? "rgba(255,255,255,0.07)": "rgba(255,255,255,0.88)");
+  const panelShadow = isWinner
+    ? (isDark
+        ? "0 0 0 1px rgba(59,158,255,0.18), 0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)"
+        : "0 0 0 1px rgba(59,158,255,0.12), 0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)")
+    : (isDark
+        ? "0 4px 24px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)"
+        : "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)");
+  const hdrBorder   = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const nameColor   = isDark ? "rgba(255,255,255,0.82)" : "rgba(0,0,0,0.78)";
+  const makerColor  = isDark ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.32)";
+  const rankBg      = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const rankClr     = isDark ? "rgba(255,255,255,0.40)" : "rgba(0,0,0,0.45)";
+  const copyBtnBg   = isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.65)";
+  const copyBtnBord = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
+  const divBorder   = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+  const barTrack    = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const barLabel    = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.32)";
+  const bodyText    = isDark ? "rgba(255,255,255,0.78)" : "rgba(0,0,0,0.72)";
+  const waitText    = isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.22)";
 
   return (
     <div
-      className={`cv-card-enter flex flex-col overflow-hidden ${isWinner ? "cv-rank-1" : ""}`}
+      className="cv-card-enter"
       style={{
+        display: "flex", flexDirection: "column", overflow: "hidden",
         borderRadius: 18,
-        border: "1px solid",
-        borderColor: isWinner ? "rgba(59,158,255,0.28)" : "rgba(255,255,255,0.88)",
-        background: isWinner
-          ? "rgba(255,255,255,0.88)"
-          : "rgba(255,255,255,0.65)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        boxShadow: isWinner
-          ? "0 0 0 1px rgba(59,158,255,0.12), 0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)"
-          : "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
+        border: `1px solid ${panelBorder}`,
+        background: panelBg,
+        backdropFilter: isDark ? "none" : "blur(24px)",
+        WebkitBackdropFilter: isDark ? "none" : "blur(24px)",
+        boxShadow: panelShadow,
         minHeight: 0, height: "100%",
         animationDelay: `${rank * 0.06}s`,
         fontFamily: "'Inter', sans-serif",
+        transition: "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
       }}
     >
       {/* Panel header */}
       <div style={{
-        borderBottom: "1px solid rgba(0,0,0,0.06)",
+        borderBottom: `1px solid ${hdrBorder}`,
         padding: "11px 14px 10px",
         display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
       }}>
@@ -115,8 +115,8 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
           flexShrink: 0, fontSize: 10, fontWeight: 700,
           background: isWinner
             ? "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)"
-            : "rgba(0,0,0,0.06)",
-          color: isWinner ? "#fff" : "rgba(0,0,0,0.45)",
+            : rankBg,
+          color: isWinner ? "#fff" : rankClr,
           boxShadow: isWinner ? "0 2px 8px rgba(59,158,255,0.38)" : "none",
         }}>
           {isWinner ? <Trophy style={{ width: 10, height: 10 }} /> : rank}
@@ -125,17 +125,17 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
         {/* Color dot + name */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
           <div style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, background: model.dot }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(0,0,0,0.78)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: nameColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {model.label}
           </span>
-          <span style={{ fontSize: 9.5, color: "rgba(0,0,0,0.32)", flexShrink: 0 }}>{model.maker}</span>
+          <span style={{ fontSize: 9.5, color: makerColor, flexShrink: 0 }}>{model.maker}</span>
         </div>
 
         {/* Score */}
         {total && (
           <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: model.color }}>{total}</span>
-            <span style={{ fontSize: 9, color: "rgba(0,0,0,0.28)" }}>/100</span>
+            <span style={{ fontSize: 9, color: makerColor }}>/100</span>
           </div>
         )}
 
@@ -147,14 +147,13 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
               width: 24, height: 24, borderRadius: 8, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
               border: "none", cursor: "pointer", transition: "background 0.14s",
-              background: copied ? "rgba(16,185,129,0.10)" : "rgba(255,255,255,0.65)",
-              border: "1px solid",
-              borderColor: copied ? "rgba(16,185,129,0.25)" : "rgba(0,0,0,0.08)",
+              background: copied ? "rgba(16,185,129,0.10)" : copyBtnBg,
+              outline: `1px solid ${copied ? "rgba(16,185,129,0.25)" : copyBtnBord}`,
             }}
           >
             {copied
               ? <Check style={{ width: 11, height: 11, color: "#059669" }} />
-              : <Copy style={{ width: 11, height: 11, color: "rgba(0,0,0,0.40)" }} />
+              : <Copy  style={{ width: 11, height: 11, color: isDark ? "rgba(255,255,255,0.40)" : "rgba(0,0,0,0.40)" }} />
             }
           </button>
         )}
@@ -164,14 +163,14 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
       {scores && (
         <div style={{
           display: "flex", gap: 8, padding: "8px 14px",
-          borderBottom: "1px solid rgba(0,0,0,0.05)", flexShrink: 0,
+          borderBottom: `1px solid ${divBorder}`, flexShrink: 0,
         }}>
           {SCORES_CRITERIA.map(c => (
             <div key={c} style={{ flex: 1 }}>
-              <div style={{ fontSize: 8, color: "rgba(0,0,0,0.32)", marginBottom: 3, fontWeight: 500 }}>
+              <div style={{ fontSize: 8, color: barLabel, marginBottom: 3, fontWeight: 500 }}>
                 {c.slice(0, 3)}
               </div>
-              <div style={{ height: 3, borderRadius: 99, overflow: "hidden", background: "rgba(0,0,0,0.06)" }}>
+              <div style={{ height: 3, borderRadius: 99, overflow: "hidden", background: barTrack }}>
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${scores[c]}%` }}
@@ -215,7 +214,7 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
             </div>
             <p style={{
               margin: 0, fontSize: 12.5, lineHeight: 1.65,
-              color: "rgba(0,0,0,0.72)", whiteSpace: "pre-wrap",
+              color: bodyText, whiteSpace: "pre-wrap",
               fontFamily: "'Inter', sans-serif",
             }}>
               {response}
@@ -223,7 +222,7 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
           </div>
         ) : (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-            <p style={{ fontSize: 12, color: "rgba(0,0,0,0.22)", fontFamily: "'Inter', sans-serif" }}>
+            <p style={{ fontSize: 12, color: waitText, fontFamily: "'Inter', sans-serif" }}>
               Waiting…
             </p>
           </div>
@@ -234,7 +233,7 @@ function ResponsePanel({ model, response, rank, isLoading, query }) {
 }
 
 // ─── Model picker — logic unchanged ──────────────────────────────────────────
-function ModelPicker({ selected, onChange }) {
+function ModelPicker({ selected, onChange, isDark }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
       {COMPARE_MODELS.map(m => {
@@ -252,13 +251,15 @@ function ModelPicker({ selected, onChange }) {
               fontSize: 11, fontWeight: 500,
               fontFamily: "'Inter', sans-serif",
               transition: "all 0.15s",
-              background: on ? `${m.color}14` : "rgba(255,255,255,0.65)",
-              border: `1px solid ${on ? m.color + "45" : "rgba(0,0,0,0.08)"}`,
-              color: on ? m.color : "rgba(0,0,0,0.55)",
+              background: on
+                ? `${m.color}14`
+                : (isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.65)"),
+              outline: `1px solid ${on ? m.color + "45" : (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)")}`,
+              color: on ? m.color : (isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)"),
               opacity: !on && selected.length >= 6 ? 0.4 : 1,
             }}
           >
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: on ? m.dot : "rgba(0,0,0,0.20)" }} />
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: on ? m.dot : (isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.20)") }} />
             {m.label}
           </button>
         );
@@ -269,6 +270,8 @@ function ModelPicker({ selected, onChange }) {
 
 // ─── Main CompareView ─────────────────────────────────────────────────────────
 export default function CompareView({ onClose }) {
+  const { isDark } = useTheme();
+
   const [query,      setQuery]      = useState("");
   const [selected,   setSelected]   = useState(DEFAULT_SELECTED);
   const [responses,  setResponses]  = useState({});
@@ -276,17 +279,41 @@ export default function CompareView({ onClose }) {
   const [hasRun,     setHasRun]     = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const textareaRef = useRef(null);
-  const styleRef    = useRef(false);
 
-  useEffect(() => {
-    if (styleRef.current) return;
-    styleRef.current = true;
-    const id = "compare-view-styles";
-    if (document.getElementById(id)) return;
-    const el = document.createElement("style");
-    el.id = id; el.textContent = COMPARE_CSS;
-    document.head.appendChild(el);
-  }, []);
+  // ── Dark-aware tokens (mirrors main-chat-page) ───────────────────────────
+  const pageBg         = isDark ? "#1A1A1A"                       : "#EBEBEB";
+  const frostBg        = isDark ? "transparent"                   : "rgba(255,255,255,0.62)";
+  const frostBlur      = isDark ? "none"                          : "blur(40px)";
+  const topBarBg       = isDark ? "rgba(26,26,26,0.90)"           : "rgba(255,255,255,0.60)";
+  const topBarBorder   = isDark ? "rgba(255,255,255,0.06)"        : "rgba(0,0,0,0.07)";
+  const inputAreaBg    = isDark ? "rgba(26,26,26,0.85)"           : "rgba(255,255,255,0.45)";
+  const inputAreaBord  = isDark ? "rgba(255,255,255,0.06)"        : "rgba(0,0,0,0.06)";
+  const inputWrapBg    = isDark ? "rgba(38,38,40,0.80)"           : "rgba(255,255,255,0.75)";
+  const inputWrapBord  = isDark ? "rgba(255,255,255,0.07)"        : "rgba(255,255,255,0.92)";
+  const inputWrapShad  = isDark
+    ? "0 8px 32px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)"
+    : "0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)";
+  const inputText      = isDark ? "rgba(255,255,255,0.88)"        : "rgba(0,0,0,0.72)";
+  const chipBg         = isDark ? "rgba(255,255,255,0.06)"        : "rgba(255,255,255,0.65)";
+  const chipEnterText  = isDark ? "rgba(255,255,255,0.22)"        : "rgba(0,0,0,0.25)";
+  const btnBg          = isDark ? "rgba(50,50,54,0.80)"           : "rgba(255,255,255,0.65)";
+  const btnBorder      = isDark ? "rgba(255,255,255,0.10)"        : "rgba(0,0,0,0.08)";
+  const btnText        = isDark ? "rgba(255,255,255,0.75)"        : "rgba(0,0,0,0.62)";
+  const btnHoverBg     = isDark ? "rgba(62,62,68,0.95)"           : "rgba(255,255,255,0.88)";
+  const pickerBg       = isDark ? "rgba(26,26,26,0.85)"           : "rgba(255,255,255,0.50)";
+  const pickerBorder   = isDark ? "rgba(255,255,255,0.06)"        : "rgba(0,0,0,0.06)";
+  const pickerLabel    = isDark ? "rgba(255,255,255,0.30)"        : "rgba(0,0,0,0.35)";
+  const iconWrapBg     = isDark ? "rgba(44,44,46,0.85)"           : "rgba(255,255,255,0.72)";
+  const iconWrapBorder = isDark ? "rgba(255,255,255,0.07)"        : "rgba(255,255,255,0.92)";
+  const iconWrapShad   = isDark ? "none"                          : "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)";
+  const iconColor      = isDark ? "rgba(255,255,255,0.45)"        : "rgba(0,0,0,0.30)";
+  const titleColor     = isDark ? "rgba(255,255,255,0.88)"        : "rgba(0,0,0,0.82)";
+  const subtitleColor  = isDark ? "rgba(255,255,255,0.32)"        : "rgba(0,0,0,0.35)";
+  const emptyHeadClr   = isDark ? "rgba(255,255,255,0.50)"        : "rgba(0,0,0,0.50)";
+  const emptyBodyClr   = isDark ? "rgba(255,255,255,0.28)"        : "rgba(0,0,0,0.30)";
+  const typingDot      = isDark ? "rgba(255,255,255,0.28)"        : "rgba(0,0,0,0.28)";
+  const scrollThumb    = isDark ? "rgba(255,255,255,0.10)"        : "rgba(0,0,0,0.18)";
+  const dividerBg      = isDark ? "rgba(255,255,255,0.06)"        : "rgba(0,0,0,0.07)";
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -339,9 +366,9 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
           messages: [{ role: "user", content: prompt }],
         }),
       });
-      const data  = await res.json();
-      const raw   = data.content?.map(b => b.text || "").join("") || "{}";
-      const clean = raw.replace(/```json|```/g, "").trim();
+      const data   = await res.json();
+      const raw    = data.content?.map(b => b.text || "").join("") || "{}";
+      const clean  = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       const entries = Object.entries(parsed.responses || {});
       entries.forEach(([id, text], i) => {
@@ -372,8 +399,7 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
       return totalScore(getScores(b.model.id, query)) - totalScore(getScores(a.model.id, query));
     });
 
-  const cols = rankedModels.length <= 2 ? 2 : rankedModels.length <= 4 ? 2 : 3;
-
+  const cols      = rankedModels.length <= 2 ? 2 : rankedModels.length <= 4 ? 2 : 3;
   const isRunning = Object.values(loading).some(Boolean);
 
   return (
@@ -390,15 +416,57 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
         WebkitFontSmoothing: "antialiased",
       }}
     >
-      {/* ── Background layers — same 3-layer system ── */}
-      <div aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 0, background: "#EBEBEB" }} />
-      <div aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 1, overflow: "hidden", pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: "-20%", left: "-15%", width: "60%", height: "65%", borderRadius: "50%", background: "rgba(199,210,254,0.18)", filter: "blur(100px)" }} />
-        <div style={{ position: "absolute", top: "-15%", right: "-15%", width: "55%", height: "60%", borderRadius: "50%", background: "rgba(186,230,253,0.15)", filter: "blur(110px)" }} />
-        <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "50%", height: "55%", borderRadius: "50%", background: "rgba(221,214,254,0.14)", filter: "blur(105px)" }} />
-        <div style={{ position: "absolute", bottom: "-10%", right: "-10%", width: "50%", height: "55%", borderRadius: "50%", background: "rgba(253,213,200,0.12)", filter: "blur(105px)" }} />
+      {/* ── Dynamic styles — reacts to isDark ── */}
+      <DarkModeStyles isDark={isDark} />
+      <style key={isDark ? "cv-dark" : "cv-light"}>{`
+        .cv-scroll::-webkit-scrollbar { width: 3px; }
+        .cv-scroll::-webkit-scrollbar-track { background: transparent; }
+        .cv-scroll::-webkit-scrollbar-thumb { background: ${scrollThumb}; border-radius: 99px; }
+        .cv-scroll { scrollbar-width: thin; scrollbar-color: ${scrollThumb} transparent; }
+
+        .cv-card-enter { animation: cv-rise 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+        @keyframes cv-rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .cv-typing span {
+          display:inline-block; width:5px; height:5px; border-radius:50%;
+          background:${typingDot}; margin:0 2px;
+          animation: cv-bounce 1s ease infinite;
+        }
+        .cv-typing span:nth-child(2) { animation-delay:.15s; }
+        .cv-typing span:nth-child(3) { animation-delay:.30s; }
+        @keyframes cv-bounce { 0%,80%,100%{transform:translateY(0);opacity:.5} 40%{transform:translateY(-5px);opacity:1} }
+
+        .compare-ta::placeholder { color: ${isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.32)"}; }
+
+        .cv-btn-reset:hover  { background: ${btnHoverBg} !important; }
+        .cv-btn-close:hover  { background: ${btnHoverBg} !important; }
+        .cv-btn-models:hover { background: ${btnHoverBg} !important; }
+      `}</style>
+
+      {/* ── Background layers — same 3-layer system as main-chat-page ── */}
+      <div aria-hidden="true" style={{
+        position: "absolute", inset: 0, zIndex: 0,
+        background: pageBg,
+        transition: "background 0.3s ease",
+      }} />
+      <div aria-hidden="true" style={{
+        position: "absolute", inset: 0, zIndex: 1,
+        overflow: "hidden", pointerEvents: "none",
+      }}>
+        {!isDark && <>
+          <div style={{ position: "absolute", top: "-20%", left: "-15%", width: "60%", height: "65%", borderRadius: "50%", background: "rgba(199,210,254,0.18)", filter: "blur(100px)" }} />
+          <div style={{ position: "absolute", top: "-15%", right: "-15%", width: "55%", height: "60%", borderRadius: "50%", background: "rgba(186,230,253,0.15)", filter: "blur(110px)" }} />
+          <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "50%", height: "55%", borderRadius: "50%", background: "rgba(221,214,254,0.14)", filter: "blur(105px)" }} />
+          <div style={{ position: "absolute", bottom: "-10%", right: "-10%", width: "50%", height: "55%", borderRadius: "50%", background: "rgba(253,213,200,0.12)", filter: "blur(105px)" }} />
+        </>}
       </div>
-      <div aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 2, background: "rgba(255,255,255,0.62)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }} />
+      <div aria-hidden="true" style={{
+        position: "absolute", inset: 0, zIndex: 2,
+        background: frostBg,
+        backdropFilter: frostBlur,
+        WebkitBackdropFilter: frostBlur,
+        transition: "background 0.3s ease",
+      }} />
 
       {/* All content above bg */}
       <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", height: "100%" }}>
@@ -407,24 +475,28 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "14px 20px", flexShrink: 0,
-          borderBottom: "1px solid rgba(0,0,0,0.07)",
-          background: "rgba(255,255,255,0.60)",
+          borderBottom: `1px solid ${topBarBorder}`,
+          background: topBarBg,
           backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+          transition: "background 0.3s ease, border-color 0.3s ease",
         }}>
           {/* Icon + title */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 30, height: 30, borderRadius: 10,
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: "rgba(255,255,255,0.72)",
-              border: "1px solid rgba(255,255,255,0.92)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,1)",
+              background: iconWrapBg,
+              border: `1px solid ${iconWrapBorder}`,
+              boxShadow: iconWrapShad,
+              transition: "background 0.3s ease",
             }}>
-              <LayoutGrid style={{ width: 15, height: 15, color: "rgba(0,0,0,0.55)" }} />
+              <LayoutGrid style={{ width: 15, height: 15, color: iconColor }} />
             </div>
             <div>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(0,0,0,0.82)" }}>Compare Models</span>
-              <span style={{ fontSize: 10.5, color: "rgba(0,0,0,0.35)", marginLeft: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: titleColor, transition: "color 0.3s ease" }}>
+                Compare Models
+              </span>
+              <span style={{ fontSize: 10.5, color: subtitleColor, marginLeft: 8, transition: "color 0.3s ease" }}>
                 {selected.length} models
               </span>
             </div>
@@ -434,20 +506,22 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
 
           {/* Model picker toggle */}
           <button
+            className="cv-btn-models"
             onClick={() => setShowPicker(p => !p)}
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "7px 14px", borderRadius: 10, border: "none", cursor: "pointer",
               fontSize: 12, fontWeight: 600, fontFamily: "'Inter', sans-serif",
-              background: showPicker ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.65)",
-              border: `1px solid ${showPicker ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.08)"}`,
-              color: "rgba(0,0,0,0.62)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+              background: showPicker ? btnHoverBg : btnBg,
+              outline: `1px solid ${btnBorder}`,
+              color: btnText,
+              boxShadow: isDark ? "none" : "inset 0 1px 0 rgba(255,255,255,0.9)",
               transition: "all 0.14s",
             }}
           >
             <ChevronDown style={{
               width: 12, height: 12,
+              color: btnText,
               transform: showPicker ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 0.2s",
             }} />
@@ -457,35 +531,36 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
           {/* Reset */}
           {hasRun && (
             <button
+              className="cv-btn-reset"
               onClick={() => { setResponses({}); setHasRun(false); setQuery(""); }}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "7px 14px", borderRadius: 10, border: "none", cursor: "pointer",
                 fontSize: 12, fontWeight: 500, fontFamily: "'Inter', sans-serif",
-                background: "rgba(255,255,255,0.65)", border: "1px solid rgba(0,0,0,0.08)",
-                color: "rgba(0,0,0,0.55)", transition: "background 0.14s",
+                background: btnBg,
+                outline: `1px solid ${btnBorder}`,
+                color: btnText,
+                transition: "background 0.14s",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.88)"}
-              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
             >
-              <RotateCcw style={{ width: 12, height: 12 }} />
+              <RotateCcw style={{ width: 12, height: 12, color: btnText }} />
               Reset
             </button>
           )}
 
           {/* Close */}
           <button
+            className="cv-btn-close"
             onClick={onClose}
             style={{
               width: 32, height: 32, borderRadius: 10, border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: "rgba(255,255,255,0.65)", border: "1px solid rgba(0,0,0,0.08)",
+              background: btnBg,
+              outline: `1px solid ${btnBorder}`,
               transition: "background 0.14s",
             }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.88)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.65)"}
           >
-            <X style={{ width: 15, height: 15, color: "rgba(0,0,0,0.55)" }} />
+            <X style={{ width: 15, height: 15, color: btnText }} />
           </button>
         </div>
 
@@ -499,17 +574,19 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
             >
               <div style={{
                 padding: "12px 20px",
-                borderBottom: "1px solid rgba(0,0,0,0.06)",
-                background: "rgba(255,255,255,0.50)",
+                borderBottom: `1px solid ${pickerBorder}`,
+                background: pickerBg,
+                transition: "background 0.3s ease",
               }}>
                 <div style={{
                   fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: "rgba(0,0,0,0.35)",
+                  textTransform: "uppercase", color: pickerLabel,
                   marginBottom: 10, fontFamily: "'Inter', sans-serif",
+                  transition: "color 0.3s ease",
                 }}>
                   Select models to compare (2–6)
                 </div>
-                <ModelPicker selected={selected} onChange={setSelected} />
+                <ModelPicker selected={selected} onChange={setSelected} isDark={isDark} />
               </div>
             </motion.div>
           )}
@@ -518,19 +595,22 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
         {/* ── Input bar ── */}
         <div style={{
           flexShrink: 0, padding: "12px 16px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-          background: "rgba(255,255,255,0.45)",
+          borderBottom: `1px solid ${inputAreaBord}`,
+          background: inputAreaBg,
+          transition: "background 0.3s ease, border-color 0.3s ease",
         }}>
           <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", gap: 10, alignItems: "flex-end" }}>
             {/* Textarea wrapper */}
             <div style={{ flex: 1, position: "relative" }}>
               <div style={{
                 borderRadius: 18,
-                background: "rgba(255,255,255,0.75)",
-                backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
-                border: "1px solid rgba(255,255,255,0.92)",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)",
+                background: inputWrapBg,
+                backdropFilter: isDark ? "none" : "blur(24px)",
+                WebkitBackdropFilter: isDark ? "none" : "blur(24px)",
+                border: `1px solid ${inputWrapBord}`,
+                boxShadow: inputWrapShad,
                 overflow: "hidden",
+                transition: "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
               }}>
                 <textarea
                   ref={textareaRef}
@@ -538,17 +618,19 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Paste your code, error, or question… all models will respond simultaneously"
                   rows={1}
+                  className="compare-ta"
                   style={{
                     width: "100%", padding: "12px 18px",
                     background: "transparent", border: "none", outline: "none",
                     resize: "none", fontSize: 13.5, fontWeight: 400,
-                    lineHeight: 1.6, color: "rgba(0,0,0,0.72)",
+                    lineHeight: 1.6, color: inputText,
                     fontFamily: "'Inter', sans-serif",
-                    caretColor: "#3B9EFF",
+                    caretColor: isDark ? "#FFFFFF" : "#3B9EFF",
                     maxHeight: 120, minHeight: 44, boxSizing: "border-box",
                   }}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runComparison(); } }}
                 />
+
                 {/* Model chips */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
@@ -570,7 +652,7 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
                       ) : null;
                     })}
                   </div>
-                  <span style={{ fontSize: 9.5, color: "rgba(0,0,0,0.25)", fontFamily: "monospace" }}>
+                  <span style={{ fontSize: 9.5, color: chipEnterText, fontFamily: "monospace" }}>
                     Enter to run
                   </span>
                 </div>
@@ -591,8 +673,10 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
                 flexShrink: 0, alignSelf: "flex-end",
                 background: query.trim() && !isRunning
                   ? "linear-gradient(145deg, #60BFFF 0%, #3B9EFF 55%, #1A7AF0 100%)"
-                  : "rgba(0,0,0,0.07)",
-                color: query.trim() && !isRunning ? "#fff" : "rgba(0,0,0,0.35)",
+                  : (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"),
+                color: query.trim() && !isRunning
+                  ? "#fff"
+                  : (isDark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.35)"),
                 boxShadow: query.trim() && !isRunning
                   ? "0 6px 22px rgba(59,158,255,0.42), inset 0 1px 0 rgba(255,255,255,0.28)"
                   : "none",
@@ -629,17 +713,18 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
               <div style={{
                 width: 52, height: 52, borderRadius: 16,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                background: "rgba(255,255,255,0.72)",
-                border: "1px solid rgba(255,255,255,0.92)",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
+                background: iconWrapBg,
+                border: `1px solid ${iconWrapBorder}`,
+                boxShadow: iconWrapShad,
+                transition: "background 0.3s ease",
               }}>
-                <LayoutGrid style={{ width: 24, height: 24, color: "rgba(0,0,0,0.30)" }} />
+                <LayoutGrid style={{ width: 24, height: 24, color: iconColor }} />
               </div>
               <div style={{ textAlign: "center" }}>
-                <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600, color: "rgba(0,0,0,0.50)", fontFamily: "'Inter', sans-serif" }}>
+                <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600, color: emptyHeadClr, fontFamily: "'Inter', sans-serif", transition: "color 0.3s ease" }}>
                   Send a query to compare all models
                 </p>
-                <p style={{ margin: 0, fontSize: 12, color: "rgba(0,0,0,0.30)", fontFamily: "'Inter', sans-serif" }}>
+                <p style={{ margin: 0, fontSize: 12, color: emptyBodyClr, fontFamily: "'Inter', sans-serif", transition: "color 0.3s ease" }}>
                   Responses appear side-by-side, ranked by score
                 </p>
               </div>
@@ -676,6 +761,7 @@ Keep each response focused and 3-6 sentences. Show genuine differences in style,
                   rank={idx + 1}
                   isLoading={isLoading}
                   query={query}
+                  isDark={isDark}
                 />
               ))}
             </div>
